@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="Model.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2008" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <!--Errors Found During Generation:
+warning 6002: The table/view 'adisdb-local.dbo.ADFeedSelectionCriteriaLookup' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+        <EntityType Name="ADFeedSelectionCriteriaLookup">
+          <Key>
+            <PropertyRef Name="Delivery" />
+            <PropertyRef Name="CriteriaType" />
+            <PropertyRef Name="Criteria" />
+          </Key>
+          <Property Name="Delivery" Type="varchar" MaxLength="64" Nullable="false" />
+          <Property Name="CriteriaType" Type="varchar" MaxLength="16" Nullable="false" />
+          <Property Name="Criteria" Type="varchar" MaxLength="256" Nullable="false" />
+          <Property Name="TermID" Type="int" />
+          <Property Name="IsActive" Type="bit" />
+          <Property Name="ModificationDate" Type="datetime" />
+          <Property Name="CreationDate" Type="datetime" />
+        </EntityType>
+        <EntityContainer Name="ModelStoreContainer">
+          <EntitySet Name="ADFeedSelectionCriteriaLookup" EntityType="Self.ADFeedSelectionCriteriaLookup" store:Type="Tables" store:Schema="dbo">
+            <DefiningQuery>SELECT 
+[ADFeedSelectionCriteriaLookup].[Delivery] AS [Delivery], 
+[ADFeedSelectionCriteriaLookup].[CriteriaType] AS [CriteriaType], 
+[ADFeedSelectionCriteriaLookup].[Criteria] AS [Criteria], 
+[ADFeedSelectionCriteriaLookup].[TermID] AS [TermID], 
+[ADFeedSelectionCriteriaLookup].[IsActive] AS [IsActive], 
+[ADFeedSelectionCriteriaLookup].[ModificationDate] AS [ModificationDate], 
+[ADFeedSelectionCriteriaLookup].[CreationDate] AS [CreationDate]
+FROM [dbo].[ADFeedSelectionCriteriaLookup] AS [ADFeedSelectionCriteriaLookup]</DefiningQuery>
+          </EntitySet>
+        </EntityContainer>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="Model" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="ADFeedSelectionCriteriaLookup">
+          <Key>
+            <PropertyRef Name="Delivery" />
+            <PropertyRef Name="CriteriaType" />
+            <PropertyRef Name="Criteria" />
+          </Key>
+          <Property Name="Delivery" Type="String" MaxLength="64" FixedLength="false" Unicode="false" Nullable="false" />
+          <Property Name="CriteriaType" Type="String" MaxLength="16" FixedLength="false" Unicode="false" Nullable="false" />
+          <Property Name="Criteria" Type="String" MaxLength="256" FixedLength="false" Unicode="false" Nullable="false" />
+          <Property Name="TermID" Type="Int32" />
+          <Property Name="IsActive" Type="Boolean" />
+          <Property Name="ModificationDate" Type="DateTime" Precision="3" />
+          <Property Name="CreationDate" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityContainer Name="Entities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="ADFeedSelectionCriteriaLookups" EntityType="Self.ADFeedSelectionCriteriaLookup" />
+        </EntityContainer>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="ModelStoreContainer" CdmEntityContainer="Entities">
+          <EntitySetMapping Name="ADFeedSelectionCriteriaLookups">
+            <EntityTypeMapping TypeName="Model.ADFeedSelectionCriteriaLookup">
+              <MappingFragment StoreEntitySet="ADFeedSelectionCriteriaLookup">
+                <ScalarProperty Name="Delivery" ColumnName="Delivery" />
+                <ScalarProperty Name="CriteriaType" ColumnName="CriteriaType" />
+                <ScalarProperty Name="Criteria" ColumnName="Criteria" />
+                <ScalarProperty Name="TermID" ColumnName="TermID" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="ModificationDate" ColumnName="ModificationDate" />
+                <ScalarProperty Name="CreationDate" ColumnName="CreationDate" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="true" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="true" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

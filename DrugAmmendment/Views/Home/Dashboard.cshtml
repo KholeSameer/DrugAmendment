@@ -1,0 +1,117 @@
+﻿@model DrugAmmendment.Models.DropDownClass
+@{
+    ViewBag.Title = "Get DropDown";
+}
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#client').change(function () {
+            var clientName = $('#client').val();
+            GetCriteria(clientName);
+        });
+        $('#activeDrugsBtn').click(function () {
+            var clientName = $('#client').val();
+            var criteriaType = $('#criteriaType').val();
+            GetActiveDrugs(clientName, criteriaType);
+        });
+    });
+
+    function GetCriteria(clientName) {
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json; charset=utf-8',
+            url: ' /Home/PopulateCriteriaType',
+            data: { ClientName: clientName },
+            dataType: 'json',
+            success: function (data) {
+                var criteriaTypeOptions;
+                var json = JSON.stringify(data);
+                $.each(data, function (i, json) {
+                    criteriaTypeOptions += "<option value='" + json.Text + "'>" + json.Text + "</option>";
+                });
+
+                $('#criteriaType').html(criteriaTypeOptions);
+            },
+            error: function (err) {
+                alert('Something went wrong...!');
+            }
+        });
+    }
+
+    function GetActiveDrugs(clientName, criteriaType) {
+        //Ajax call to get Active Drugs
+        //alert(clientName + " " + criteriaType);
+
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json; charset=utf-8',
+            url: ' /Home/GetDrugList',
+            data: { ClientName: clientName, CriteriaType: criteriaType },
+            dataType: 'json',
+            success: function (data) {
+                var json = JSON.stringify(data);
+                $("#DrugDetailsTable").find("tr:gt(0)").remove();
+                var tableRow = "";
+                $.each(data, function (i, json) {
+                    var date = null;
+                    var CreationDate = null;
+                    var ModificationDate = null;
+
+                    if (json.CreationDate != null) {
+                        date = new Date(parseInt(json.CreationDate.substr(6)));
+                        CreationDate = date.getFullYear() + "-" +
+                            ("0" + (date.getMonth() + 1)).slice(-2) + "-" +
+                            ("0" + date.getDate()).slice(-2) + " " + date.getHours() + ":" +
+                            date.getMinutes();
+                    }
+                    if (json.ModificationDate != null) {
+                        date = new Date(parseInt(json.ModificationDate.substr(6)));
+                        ModificationDate = date.getFullYear() + "-" +
+                            ("0" + (date.getMonth() + 1)).slice(-2) + "-" +
+                            ("0" + date.getDate()).slice(-2) + " " + date.getHours() + ":" +
+                            date.getMinutes();
+                    }
+                    
+                    tableRow += '<tr><td>' + json.Criteria + '</td><td>' + json.TermID + '</td><td>' + ModificationDate + '</td><td>' + CreationDate + '</td></tr>';
+
+                    console.log(json.Criteria + "  " + json.TermID + "  " + ModificationDate + "  " + CreationDate);
+                });
+                $('#DrugDetailsTable').append(tableRow);
+            },
+            error: function (err) {
+                alert('Something went wrong...!');
+            }
+        });
+    }
+</script>
+<style>
+    #DrugDetailsTable {
+        margin:20px;
+    }
+</style>
+<h2>Dashboard</h2>
+
+
+@using (Html.BeginForm("GetDrugList", "Home", FormMethod.Post))
+{
+    @Html.DropDownList("SelectClient", Model.ClientName, "Select Customer", new { id = "client", @class = "form-control"})
+
+    <select id="criteriaType" class="form-control" name="criteriaType">
+        <option value="-1">Select Criteria Type</option>
+    </select>
+    
+    <input type="button" name="activeDrugs" value="Get Active Drugs" id="activeDrugsBtn" class="btn-primary" />
+
+    <input type="submit" name="name" class="btn-primary" value="Get Drug List"/>
+
+    <table id="DrugDetailsTable" class="table table-striped">
+        <tr>
+            <th>Criteria</th>
+            <th>TermID</th>
+            <th>Modification Date</th>
+            <th>Creation Date</th>
+        </tr>
+    </table>
+}
+
+
