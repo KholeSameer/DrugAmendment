@@ -2,9 +2,64 @@
 @{
     ViewBag.Title = "Get DropDown";
 }
+
+<link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel="stylesheet" />
+
+
+<style>
+    #client {
+        margin:20px;
+    }
+    #criteriaType{
+        margin:20px;
+    }
+    #DrugDetailsTable {
+        margin:100px 20px 20px 20px;
+    }
+    #activeDrugsBtn {
+        margin:20px;
+    }
+    #addDrugBtn{
+        margin:20px;
+    }
+   
+</style>
+<h2>Dashboard</h2>
+
+
+@using (Html.BeginForm("AddDrugView", "Home", FormMethod.Post))
+{
+    @Html.DropDownList("SelectClient", Model.ClientName, "Select Customer", new { id = "client", @class = "form-control"})
+
+    <select id="criteriaType" class="form-control" name="criteriaType">
+        <option value="-1" class="form-control">Select Criteria Type</option>
+    </select>
+    
+    <input type="button" name="activeDrugs" value="Get Active Drugs" id="activeDrugsBtn" class="btn-primary btn-lg" />
+    <input type="submit" name="addDrug" value="Add New Drug" id="addDrugBtn" class="btn-primary btn-lg" />
+    <input type="button" name="deleteDrug" value="Delete Drug" id="deleteDrugBtn" class="btn-primary btn-lg" />
+    <table id="DrugDetailsTable" class="table">
+        <thead>
+            <tr>
+                <th>Criteria</th>
+                <th>TermID</th>
+                <th>Modification Date</th>
+                <th>Creation Date</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+}
+
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+
 <script type="text/javascript">
     $(document).ready(function () {
+
         $('#client').change(function () {
             var clientName = $('#client').val();
             GetCriteria(clientName);
@@ -13,6 +68,12 @@
             var clientName = $('#client').val();
             var criteriaType = $('#criteriaType').val();
             GetActiveDrugs(clientName, criteriaType);
+        });
+        $('#deleteDrugBtn').click(function () {
+            var clientName = $('#client').val();
+            var criteriaType = $('#criteriaType').val();
+            var url = "/Home/DeleteDrugView?clientName=" + clientName + "&criteriaType=" + criteriaType;
+            window.location.href = url;
         });
     });
 
@@ -39,9 +100,6 @@
     }
 
     function GetActiveDrugs(clientName, criteriaType) {
-        //Ajax call to get Active Drugs
-        //alert(clientName + " " + criteriaType);
-
         $.ajax({
             type: 'GET',
             contentType: 'application/json; charset=utf-8',
@@ -50,7 +108,7 @@
             dataType: 'json',
             success: function (data) {
                 var json = JSON.stringify(data);
-                $("#DrugDetailsTable").find("tr:gt(0)").remove();
+
                 var tableRow = "";
                 $.each(data, function (i, json) {
                     var date = null;
@@ -71,47 +129,38 @@
                             ("0" + date.getDate()).slice(-2) + " " + date.getHours() + ":" +
                             date.getMinutes();
                     }
-                    
+
                     tableRow += '<tr><td>' + json.Criteria + '</td><td>' + json.TermID + '</td><td>' + ModificationDate + '</td><td>' + CreationDate + '</td></tr>';
 
                     console.log(json.Criteria + "  " + json.TermID + "  " + ModificationDate + "  " + CreationDate);
                 });
-                $('#DrugDetailsTable').append(tableRow);
+                $('#DrugDetailsTable tbody').html(tableRow);
+                //Pagination
+                $('#DrugDetailsTable').DataTable();
+                //
+
             },
             error: function (err) {
                 alert('Something went wrong...!');
             }
         });
     }
-</script>
-<style>
-    #DrugDetailsTable {
-        margin:20px;
+
+    function DeleteDrug(clientName, criteriaType) {
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json; charset=utf-8',
+            url: ' /Home/DeleteDrug',
+            data: { ClientName: clientName, CriteriaType: criteriaType },
+            dataType: 'json',
+            success: function (data) {
+                alert("Deleted Successfully...!");
+            },
+            error: function (err) {
+                alert('Something went wrong...! Drug not deleted/Updated');
+            }
+        });
     }
-</style>
-<h2>Dashboard</h2>
 
-
-@using (Html.BeginForm("GetDrugList", "Home", FormMethod.Post))
-{
-    @Html.DropDownList("SelectClient", Model.ClientName, "Select Customer", new { id = "client", @class = "form-control"})
-
-    <select id="criteriaType" class="form-control" name="criteriaType">
-        <option value="-1">Select Criteria Type</option>
-    </select>
-    
-    <input type="button" name="activeDrugs" value="Get Active Drugs" id="activeDrugsBtn" class="btn-primary" />
-
-    <input type="submit" name="name" class="btn-primary" value="Get Drug List"/>
-
-    <table id="DrugDetailsTable" class="table table-striped">
-        <tr>
-            <th>Criteria</th>
-            <th>TermID</th>
-            <th>Modification Date</th>
-            <th>Creation Date</th>
-        </tr>
-    </table>
-}
-
+</script>
 

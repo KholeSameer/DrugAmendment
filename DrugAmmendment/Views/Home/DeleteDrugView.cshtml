@@ -1,0 +1,67 @@
+﻿
+@{
+    ViewBag.Title = "DeleteDrugView";
+}
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<h2 class="col-lg-offset-5">Delete Drug</h2>
+@using (Html.BeginForm("DeleteDrug", "Home", FormMethod.Post))
+{
+    <div class="col-lg-offset-4 col-md-6">
+        <label>Delivery: </label>
+        <input type="text" name="client" id="client" value="@ViewBag.Delivery" readonly class="form-control" />
+        <label>Citeria Type: </label>
+        <input type="text" name="criteriaType" id="criteriaType" value="@ViewBag.CriteriaType" readonly class="form-control" />
+        
+        <label>Criteria: </label>
+        <input type="text" name="criteria" id="criteria" value="" class="form-control" /><br />
+
+        <input type="submit" name="btnSubmit" id="btnSubmit" value="DELETE DRUG" class="btn btn-primary" />
+    </div>
+}
+
+<style>
+    .ui-autocomplete{
+        max-height: 150px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+</style>
+
+<script type="text/javascript">
+
+        $(function () {
+            $("#criteria").autocomplete({
+                source: function (request, response) {
+                    var param = { criteria: $('#criteria').val(), delivery: $('#client').val(), criteriaType: $('#criteriaType').val() };
+                    $.ajax({
+                        url: "GetAutoCriteria",
+                        data: JSON.stringify(param),
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8",
+                        dataFilter: function (data) { return data; },
+                        success: function (data) {
+
+                            //console.log(data);
+
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item,
+                                    value: item
+                                };
+                            }));
+
+                        },
+                        error: function (err) {
+                            alert(err.Message + "   Some Error Message");
+                        }
+                    });
+                },
+                minLength: 2,
+                max:10,
+            });
+        });
+</script>  
