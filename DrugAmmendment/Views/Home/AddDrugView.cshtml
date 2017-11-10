@@ -2,6 +2,9 @@
 @{
     ViewBag.Title = "Add Drug View";
 }
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 
 <h2 class="col-lg-offset-5">Add Drug</h2>
 @using (Html.BeginForm("AddDrug", "Home", FormMethod.Post))
@@ -16,3 +19,46 @@
         <input type="submit" name="btnSubmit" id="btnSubmit" value="ADD DRUG" class="btn btn-primary"  />
     </div>
 }
+
+<style>
+    .ui-autocomplete {
+        max-height: 150px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        max-width: 700px;
+    }
+</style>
+
+<script type="text/javascript">
+
+        $(function () {
+            $("#criteria").autocomplete({
+                source: function (request, response) {
+                    var param = { criteria: $('#criteria').val(), delivery: $('#client').val(), criteriaType: $('#criteriaType').val() };
+                    $.ajax({
+                        url: "GetAutoTHSTerm",
+                        data: JSON.stringify(param),
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8",
+                        dataFilter: function (data) { return data; },
+                        success: function (data) {
+                            console.log(data);
+                            response($.map(data, function (item) {
+                                return {
+                                    label: item,
+                                    value: item
+                                };
+                            }));
+
+                        },
+                        error: function (err) {
+                            debugger;
+                            alert(err + "   Some Error Message");
+                        }
+                    });
+                },
+                minLength: 3
+            });
+        });
+</script>

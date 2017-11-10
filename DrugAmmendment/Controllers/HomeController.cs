@@ -47,15 +47,15 @@ namespace DrugAmmendment.Controllers
                 ArrayList ThesData  = GetDataFromThesTerm(criteriaFromUser);
                 string criteria = ThesData[0].ToString();
                 int termID = Convert.ToInt32(ThesData[1]);
-                DateTime now = DateTime.Now;
-                bool isAddedToDB = AddDrugToDB(delivery, criteriaType, criteria, termID);
-                if (isAddedToDB)
+
+                bool isAvailableNonActive = CheckIsAvailableNonActive(delivery, criteriaType, criteria);
+                if (isAvailableNonActive)
                 {
-                    Response.Write("<script>window.alert(\'Drug Added Successfully\');window.location='Dashboard';</script>");
+                    UpdateToActive(delivery, criteriaType, criteria);
                 }
                 else
                 {
-                    Response.Write("<script>window.alert(\'Drug Not Added in DB\');window.location='Dashboard';</script>");
+                    AddDrugToDB(delivery, criteriaType, criteria, termID);
                 }
             }
             else
@@ -66,13 +66,55 @@ namespace DrugAmmendment.Controllers
             }
         }
 
+        private void UpdateToActive(string delivery, string criteriaType, string criteria)
+        {
+            int RA = 0;
+            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(connectionString);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand(string.Format("update dbo.ADFeedSelectionCriteriaLookup set IsActive = 1, ModificationDate = GETDATE() where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}'", delivery, criteriaType, criteria), conn);
+            RA = cmd.ExecuteNonQuery();
+            if (RA > 0 )
+            {
+                Response.Write("<script>window.alert(\'Drug Updated to Active Successfully\');window.location='Dashboard';</script>");
+            }
+            else
+            {
+                Response.Write("<script>window.alert(\'Drug Not Updated\');window.location='Dashboard';</script>");
+            }
+            
+        }
+
+        private bool CheckIsAvailableNonActive(string delivery, string criteriaType, string criteria)
+        {
+            bool flag = false;
+            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(connectionString);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand(string.Format("select Criteria FROM dbo.ADFeedSelectionCriteriaLookup where Criteria  like '{0}' and IsActive = 0", criteria), conn);
+            SqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                if (reader[0].ToString().Equals(criteria, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    flag = true;
+                }
+                else
+                {
+                    flag = false;
+                }
+            }
+            conn.Close();
+            return flag;
+        }
+
         public bool ValidateLeadTerm(string criteria)
         {
             bool flag = false ;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             conn.Open();
-            SqlCommand cmd = new SqlCommand(string.Format("select LeadTerm FROM [adisdb-local].[dbo].[THSTerm] where LeadTerm  like '{0}'", criteria), conn);
+            SqlCommand cmd = new SqlCommand(string.Format("select LeadTerm FROM dbo.THSTerm where LeadTerm  like '{0}'", criteria), conn);
             SqlDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -95,7 +137,7 @@ namespace DrugAmmendment.Controllers
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             conn.Open();
-            SqlCommand cmd = new SqlCommand(string.Format("select LeadTerm, TermID from [adisdb-local].[dbo].[THSTerm] where LeadTerm = '{0}'", criteria), conn);
+            SqlCommand cmd = new SqlCommand(string.Format("select LeadTerm, TermID from dbo.THSTerm where LeadTerm = '{0}'", criteria), conn);
             SqlDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -106,12 +148,11 @@ namespace DrugAmmendment.Controllers
             return data;
         }
 
-        private bool AddDrugToDB(string delivery, string criteriaType, string criteria, int termID)
+        private void AddDrugToDB(string delivery, string criteriaType, string criteria, int termID)
         {
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            
-            SqlCommand cmd = new SqlCommand(string.Format("insert into dbo.ADFeedSelectionCriteriaLookup values ('{0}','{1}','{2}',{3},{4},'{5}','{6}')", delivery, criteriaType, criteria, termID, 1, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"), DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") ), conn);
+            SqlCommand cmd = new SqlCommand(string.Format("insert into dbo.ADFeedSelectionCriteriaLookup values ('{0}','{1}','{2}',{3},{4},GETDATE(),GETDATE())", delivery, criteriaType, criteria, termID, 1), conn);
             int RA = 0;
             try
             {
@@ -128,11 +169,11 @@ namespace DrugAmmendment.Controllers
                          
             if (RA > 0)
             {
-                return true;
+                Response.Write("<script>window.alert(\'Drug Added Successfully\');window.location='Dashboard';</script>");
             }
             else
             {
-                return false;
+                Response.Write("<script>window.alert(\'Drug Not Added in DB\');window.location='Dashboard';</script>");
             }
         }
 
@@ -256,9 +297,37 @@ namespace DrugAmmendment.Controllers
 
         public void DeleteDrug(FormCollection form)
         {
-            
+            string Criteria = form["criteria"];
+            string CriteriaType = form["criteriaType"];
+            string Delivery = form["client"];
+            int RA = 0;
+            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(connectionString);
+            SqlCommand cmd = new SqlCommand(string.Format("update [dbo].[ADFeedSelectionCriteriaLookup] set IsActive = 0 , ModificationDate = GETDATE() where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}'",Delivery, CriteriaType, Criteria), conn);
+            try
+            {
+                conn.Open();
+                RA = cmd.ExecuteNonQuery();
 
-            Response.Write("<h1>" + form["criteria"] + " <br/>  " + form["client"] + " <br/> " + form["criteriaType"] + "</h1>" );
+            }
+            catch (Exception e)
+            {
+                Response.Write(e.Message);
+            }
+            finally
+            {
+                conn.Close();
+            }
+            
+            if (RA > 0)
+            {
+                Response.Write("<script>window.alert(\'Drug Deleted/Updated Successfully\');window.location='Dashboard';</script>");
+            }
+            else
+            {
+                Response.Write("<script>window.alert(\'Drug Not Present in DB\');window.location='DeleteDrugView';</script>");
+            }
+            //Response.Write("<h1>" + form["criteria"] + " <br/>  " + form["client"] + " <br/> " + form["criteriaType"] + "</h1>" );
         }
 
         public JsonResult GetAutoCriteria(string criteria, string delivery, string criteriaType)
@@ -267,7 +336,7 @@ namespace DrugAmmendment.Controllers
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             conn.Open();
-            SqlCommand cmd = new SqlCommand(string.Format("SELECT distinct Criteria FROM dbo.ADFeedSelectionCriteriaLookup WHERE Delivery = '{0}' and  CriteriaType = '{1}' and Criteria LIKE '%{2}%'", delivery, criteriaType, criteria), conn);
+            SqlCommand cmd = new SqlCommand(string.Format("SELECT distinct Criteria FROM dbo.ADFeedSelectionCriteriaLookup WHERE Delivery = '{0}' and  CriteriaType = '{1}' and Criteria LIKE '%{2}%' and IsActive = 1", delivery, criteriaType, criteria), conn);
             SqlDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -275,6 +344,22 @@ namespace DrugAmmendment.Controllers
             }
             conn.Close();
             return Json(CriteriaList, JsonRequestBehavior.AllowGet);
+        }
+
+        public JsonResult GetAutoTHSTerm(string criteria, string delivery, string criteriaType)
+        {
+            List<string> LeadTermList = new List<string>();
+            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(connectionString);
+            conn.Open();
+            SqlCommand cmd = new SqlCommand(string.Format("select leadterm from dbo.THSTerm where LeadTerm like '%{0}%' and IsApproved = 'Y'", criteria), conn);
+            SqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                LeadTermList.Add(reader[0].ToString());
+            }
+            conn.Close();
+            return Json(LeadTermList, JsonRequestBehavior.AllowGet);
         }
     }
 }
