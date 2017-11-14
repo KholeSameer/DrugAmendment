@@ -11,15 +11,15 @@
 {
     <div class="col-lg-offset-4 col-md-6">
         <label>Delivery: </label>
-        <input type="text" name="client" id="client" value="@ViewBag.client" readonly class="form-control" />
+        @*<input type="text" name="client" id="client" value="@ViewBag.client" readonly class="form-control" />*@
+        <input type="text" name="client" id="client" value="@TempData["Client"]" readonly class="form-control" />
         <label>Citeria Type: </label>
-        <input type="text" name="criteriaType" id="criteriaType" value="@ViewBag.criteriaType" readonly class="form-control" />
+        <input type="text" name="criteriaType" id="criteriaType" value="@TempData["CriteriaType"]" readonly class="form-control" />
         <label>Criteria: </label>
         <input type="text" name="criteria" id="criteria" value="" class="form-control" /><br/>
-        <input type="submit" name="btnSubmit" id="btnSubmit" value="ADD DRUG" class="btn btn-primary"  />
+        <input type="submit" name="btnSubmit" id="btnSubmit" value="ADD DRUG" class="btn btn-primary" onclick="return confirm('Are you sure? Do you want to Add this drug?')" />
     </div>
 }
-
 <style>
     .ui-autocomplete {
         max-height: 150px;
