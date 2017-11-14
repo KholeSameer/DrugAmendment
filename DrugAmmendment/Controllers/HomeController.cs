@@ -22,21 +22,26 @@ namespace DrugAmmendment.Controllers
 
         public ActionResult AddDrugView(FormCollection form)
         {
+            if (form.Count == 0 && TempData["Client"] == null && TempData["CriteriaType"] == null)
+                return Redirect("Dashboard");
+
             string client = form["SelectClient"];
             string criteriaType = form["criteriaType"];
-            //Response.Write("Client : "+ client + "  Criteria Type : " + criteriaType);
-            ViewBag.client = client;
-            ViewBag.criteriaType = criteriaType;
+
+            if (TempData["Client"] == null)
+            {
+                TempData["Client"] = client;
+            }
+            if (TempData["CriteriaType"] == null)
+            {
+                TempData["CriteriaType"] = criteriaType;
+            }
             return View();
         }
 
         [HttpPost]
         public void AddDrug(FormCollection form)
         {
-            //string criteriaFromUser = Criteria;
-            //string delivery = Delivery;
-            //string criteriaType = CriteriaType;
-
             string criteriaFromUser = form["criteria"];
             string delivery = form["client"];
             string criteriaType = form["criteriaType"];
@@ -55,19 +60,59 @@ namespace DrugAmmendment.Controllers
                 }
                 else
                 {
-                    AddDrugToDB(delivery, criteriaType, criteria, termID);
+                    CheckIsAvailableActive(delivery, criteriaType, criteria, termID);
                 }
             }
             else
             {
-                ViewBag.client = delivery;
-                ViewBag.criteriaType = criteriaType;
+                TempData["Client"] = delivery;
+                TempData["CriteriaType"] = criteriaType;
                 Response.Write("<script>window.alert(\'This drug is not a valid drug...! Please insert a valid one...!\');window.location='AddDrugView'</script>");
             }
         }
 
+        private void CheckIsAvailableActive(string delivery, string criteriaType, string criteria, int termID)
+        {
+            TempData["Client"] = delivery;
+            TempData["CriteriaType"] = criteriaType;
+
+            int RA = 0;
+            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(connectionString);
+            SqlCommand cmd = new SqlCommand(string.Format("select Criteria FROM ADFeedSelectionCriteriaLookup where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}' and IsActive = 1 ", delivery, criteriaType, criteria), conn);
+            try
+            {
+                conn.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    RA = 1;
+                }
+            }
+            catch (Exception)
+            {
+                Response.Write("<script>window.alert(\'Something Went Wrong...! Please Try Later...! \');window.location='Dashboard'</script>");
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            if (RA > 0)
+            {
+                Response.Write("<script>window.alert(\'This drug is already Present & Active in the DB...!');window.location='AddDrugView'</script>");
+            }
+            else
+            {
+                AddDrugToDB(delivery, criteriaType, criteria, termID);
+            }
+            
+        }
+
         private void UpdateToActive(string delivery, string criteriaType, string criteria)
         {
+            TempData["Client"] = delivery;
+            TempData["CriteriaType"] = criteriaType;
             int RA = 0;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
@@ -76,7 +121,7 @@ namespace DrugAmmendment.Controllers
             RA = cmd.ExecuteNonQuery();
             if (RA > 0 )
             {
-                Response.Write("<script>window.alert(\'Drug Updated to Active Successfully\');window.location='Dashboard';</script>");
+                Response.Write("<script>window.alert(\'Drug Updated to Active Successfully\');window.location='AddDrugView';</script>");
             }
             else
             {
@@ -91,7 +136,7 @@ namespace DrugAmmendment.Controllers
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             conn.Open();
-            SqlCommand cmd = new SqlCommand(string.Format("select Criteria FROM dbo.ADFeedSelectionCriteriaLookup where Criteria  like '{0}' and IsActive = 0", criteria), conn);
+            SqlCommand cmd = new SqlCommand(string.Format("select Criteria FROM dbo.ADFeedSelectionCriteriaLookup where Criteria  = '{0}' and Delivery = '{1}' and IsActive = 0", criteria, delivery), conn);
             SqlDataReader reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -108,7 +153,7 @@ namespace DrugAmmendment.Controllers
             return flag;
         }
 
-        public bool ValidateLeadTerm(string criteria)
+        private bool ValidateLeadTerm(string criteria)
         {
             bool flag = false ;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
@@ -150,6 +195,9 @@ namespace DrugAmmendment.Controllers
 
         private void AddDrugToDB(string delivery, string criteriaType, string criteria, int termID)
         {
+            TempData["Client"] = delivery;
+            TempData["CriteriaType"] = criteriaType;
+
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             SqlCommand cmd = new SqlCommand(string.Format("insert into dbo.ADFeedSelectionCriteriaLookup values ('{0}','{1}','{2}',{3},{4},GETDATE(),GETDATE())", delivery, criteriaType, criteria, termID, 1), conn);
@@ -161,7 +209,7 @@ namespace DrugAmmendment.Controllers
             }
             catch (Exception e)
             {
-                Response.Write("<script>window.alert(\'Drug " + criteria + " is already present in " + delivery + " Table.\');window.location='Dashboard';</script>");
+                Response.Write("<script>window.alert(\'Drug " + criteria + " is already present in " + delivery + " Table.Errrrrrrrrrrrrrr\');window.location='Dashboard';</script>");
             }
             finally {
                 conn.Close();
@@ -169,7 +217,7 @@ namespace DrugAmmendment.Controllers
                          
             if (RA > 0)
             {
-                Response.Write("<script>window.alert(\'Drug Added Successfully\');window.location='Dashboard';</script>");
+                Response.Write("<script>window.alert(\'Drug Added Successfully\');window.location='AddDrugView';</script>");
             }
             else
             {
@@ -290,16 +338,30 @@ namespace DrugAmmendment.Controllers
 
         public ActionResult DeleteDrugView()
         {
-            ViewBag.CriteriaType = Request.QueryString["criteriaType"];
-            ViewBag.Delivery = Request.QueryString["clientName"];
+            if (Request.QueryString.Count == 0 && TempData["Client"] == null && TempData["CriteriaType"] == null)
+                return Redirect("Dashboard");
+
+            if (TempData["Client"] == null)
+            {
+                TempData["Client"] = Request.QueryString["clientName"];
+            }
+            if (TempData["CriteriaType"] == null)
+            {
+                TempData["CriteriaType"] = Request.QueryString["criteriaType"];
+            }
             return View();
         }
 
         public void DeleteDrug(FormCollection form)
         {
+
             string Criteria = form["criteria"];
             string CriteriaType = form["criteriaType"];
             string Delivery = form["client"];
+
+            TempData["Client"] = Delivery;
+            TempData["CriteriaType"] = CriteriaType;
+
             int RA = 0;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
@@ -321,7 +383,7 @@ namespace DrugAmmendment.Controllers
             
             if (RA > 0)
             {
-                Response.Write("<script>window.alert(\'Drug Deleted/Updated Successfully\');window.location='Dashboard';</script>");
+                Response.Write("<script>window.alert(\'Drug Deleted/Updated Successfully\');window.location='DeleteDrugView';</script>");
             }
             else
             {
