@@ -101,9 +101,10 @@
             dataType: 'json',
             success: function (data) {
                 var json = JSON.stringify(data);
-
                 var tableRow = "";
-                var tableHeader = "<thead>< tr ><th>Criteria</th><th>TermID</th><th>Modification Date</th><th>Creation Date</th></tr ></thead >";
+                var dynamicID = clientName.substring(clientName.indexOf(".") + 1);
+                var table = "<table id='DrugDetailsTable" + dynamicID + "'>";
+                var tableHeader = "<thead><tr><th>Criteria</th><th>TermID</th><th>Modification Date</th><th>Creation Date</th></tr ></thead >";
                 $.each(data, function (i, json) {
                     var date = null;
                     var CreationDate = null;
@@ -128,10 +129,11 @@
 
                     //console.log(json.Criteria + "  " + json.TermID + "  " + ModificationDate + "  " + CreationDate);
                 });
-                var appendData = tableHeader + tableRow;
-                $('#DrugDetailsTable').html(appendData);
+                var appendData = table + tableHeader + tableRow;
+                appendData += "</table >";
+                $('#DrugDetailsDiv').html(appendData);
                 //Pagination
-                $('#DrugDetailsTable').DataTable();
+                $("#DrugDetailsTable" + dynamicID +"").DataTable();
             },
             error: function (err) {
                 alert('Something went wrong...!');
