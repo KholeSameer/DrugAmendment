@@ -7,6 +7,8 @@
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
 <script src="~/Scripts/DataTables/datatables.min.js"></script>
 
+<script src="https://rawgit.com/unconditional/jquery-table2excel/master/src/jquery.table2excel.js"></script>
+
 <style>
     #client {
         margin:20px;
@@ -39,9 +41,11 @@
         <input type="button" name="activeDrugs" value="Get Active Drugs" id="activeDrugsBtn" class="btn-primary btn-lg" />
         <input type="submit" name="addDrug" value="Add New Drug" id="addDrugBtn" class="btn-primary btn-lg" />
         <input type="button" name="deleteDrug" value="Delete Drug" id="deleteDrugBtn" class="btn-primary btn-lg" />
-        <table id="DrugDetailsTable" class="table">
-                @* Dynamically Populated Data from DB in this Table *@
-        </table>
+
+        <div id="DrugDetailsDiv" >
+
+        </div>
     </form>
+
 
 <script src="~/Scripts/Dashboard.js"></script>
