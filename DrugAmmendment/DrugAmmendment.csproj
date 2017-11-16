@@ -114,6 +114,7 @@
     <Content Include="DashBoard.aspx" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
+    <Content Include="Scripts\AddDrugView.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <EntityDeploy Include="ADFeed.edmx">
@@ -124,6 +125,7 @@
       <DependentUpon>ADFeed.edmx</DependentUpon>
     </Content>
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
+    <Content Include="Scripts\Dashboard.js" />
     <Content Include="Scripts\DataTables\DataTables-1.10.16\css\dataTables.bootstrap.css" />
     <Content Include="Scripts\DataTables\DataTables-1.10.16\css\dataTables.bootstrap.min.css" />
     <Content Include="Scripts\DataTables\DataTables-1.10.16\css\dataTables.bootstrap4.css" />
@@ -157,6 +159,7 @@
     <Content Include="Scripts\DataTables\datatables.js" />
     <Content Include="Scripts\DataTables\datatables.min.css" />
     <Content Include="Scripts\DataTables\datatables.min.js" />
+    <Content Include="Scripts\DeleteDrugView.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
     <Content Include="Scripts\jquery-1.10.2.min.js" />
     <Content Include="Scripts\jquery-ui.css" />
