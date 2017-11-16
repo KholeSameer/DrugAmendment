@@ -1,9 +1,9 @@
 ﻿@model DrugAmmendment.Models.DropDownClass
 @{
-    ViewBag.Title = "Get DropDown";
+    ViewBag.Title = "Dashboard";
 }
 
-<link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="~/Scripts/DataTables/datatables.min.css" rel="stylesheet" />
 
 
 <style>
@@ -26,56 +26,97 @@
 </style>
 <h2>Dashboard</h2>
 
+    <form action="@Url.Action("AddDrugView", "Home")" id="DashboardForm" method="post">
+        <select id="client" class="form-control" name="Client" required>
+            <option value="">Select Customer</option>
+        </select>
 
-@using (Html.BeginForm("AddDrugView", "Home", FormMethod.Post))
-{
-    @Html.DropDownList("SelectClient", Model.ClientName, "Select Customer", new { id = "client", @class = "form-control"})
+        <select id="criteriaType" class="form-control" name="criteriaType">
+            <option value="">Select Criteria Type</option>
+        </select>
 
-    <select id="criteriaType" class="form-control" name="criteriaType">
-        <option value="-1" class="form-control">Select Criteria Type</option>
-    </select>
-    
-    <input type="button" name="activeDrugs" value="Get Active Drugs" id="activeDrugsBtn" class="btn-primary btn-lg" />
-    <input type="submit" name="addDrug" value="Add New Drug" id="addDrugBtn" class="btn-primary btn-lg" />
-    <input type="button" name="deleteDrug" value="Delete Drug" id="deleteDrugBtn" class="btn-primary btn-lg" />
-    <table id="DrugDetailsTable" class="table">
-        <thead>
-            <tr>
-                <th>Criteria</th>
-                <th>TermID</th>
-                <th>Modification Date</th>
-                <th>Creation Date</th>
-            </tr>
-        </thead>
-        <tbody>
-
-        </tbody>
-    </table>
-
-}
+        <input type="button" name="activeDrugs" value="Get Active Drugs" id="activeDrugsBtn" class="btn-primary btn-lg" />
+        <input type="submit" name="addDrug" value="Add New Drug" id="addDrugBtn" class="btn-primary btn-lg" />
+        <input type="button" name="deleteDrug" value="Delete Drug" id="deleteDrugBtn" class="btn-primary btn-lg" />
+        <table id="DrugDetailsTable" class="table">
+                @* Dynamically Populated Data from DB in this Table *@
+        </table>
+    </form>
 
 <script src="~/Scripts/jquery-1.10.2.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="~/Scripts/DataTables/datatables.min.js"></script>
 
 <script type="text/javascript">
-    $(document).ready(function () {
+    $(window).load(function () {
+        GetClient();
+    });
 
+    $(window).bind("pageshow", function () {
+        $('#criteriaType').val('');
+        $('#criteriaType option').text("Select Criteria Type");
+        $('#criteriaType option').attr('selected', 'selected');
+    });
+
+    $(document).ready(function () {
+        
         $('#client').change(function () {
             var clientName = $('#client').val();
-            GetCriteria(clientName);
+            if (clientName == '') {
+                $('#criteriaType').val('');
+                $('#criteriaType option').text("Select Criteria Type");
+                $('#criteriaType option').attr('selected', 'selected');
+            }
+            else {
+                GetCriteria(clientName);
+            }
+            
         });
         $('#activeDrugsBtn').click(function () {
             var clientName = $('#client').val();
             var criteriaType = $('#criteriaType').val();
-            GetActiveDrugs(clientName, criteriaType);
+            if (clientName != '' && criteriaType != '') {
+                GetActiveDrugs(clientName, criteriaType);
+            }
+            else {
+                alert("All Fields are Mandatory...!");
+            }
         });
         $('#deleteDrugBtn').click(function () {
             var clientName = $('#client').val();
             var criteriaType = $('#criteriaType').val();
-            var url = "/Home/DeleteDrugView?clientName=" + clientName + "&criteriaType=" + criteriaType;
-            window.location.href = url;
+            if (clientName != '' && criteriaType != '') {
+                var url = "/Home/DeleteDrugView?clientName=" + clientName + "&criteriaType=" + criteriaType;
+                window.location.href = url;
+            }
+            else {
+                alert("All Fields are Manadatory...!");
+            }
+            
         });
     });
+
+    function GetClient() {
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json; charset=utf-8',
+            url: ' /Home/PopulateClients',
+            dataType: 'json',
+            success: function (data) {
+                var clientOptions;
+                clientOptions = "<option value=''>Select Customer</option>";
+                var json = JSON.stringify(data);
+                $.each(data, function (i, json) {
+                    var ClientNames = json.Text.substring(json.Text.indexOf(".") + 1);
+                    ClientNames = ClientNames.charAt(0).toUpperCase() + ClientNames.slice(1);
+                    clientOptions += "<option value='" + json.Text + "'>" + ClientNames + "</option>";
+                });
+                $('#client').html(clientOptions);
+            },
+            error: function (err) {
+                alert('Something went wrong...!');
+            }
+        });
+    }
 
     function GetCriteria(clientName) {
         $.ajax({
@@ -110,6 +151,7 @@
                 var json = JSON.stringify(data);
 
                 var tableRow = "";
+                var tableHeader = "<thead>< tr ><th>Criteria</th><th>TermID</th><th>Modification Date</th><th>Creation Date</th></tr ></thead >";
                 $.each(data, function (i, json) {
                     var date = null;
                     var CreationDate = null;
@@ -132,13 +174,12 @@
 
                     tableRow += '<tr><td>' + json.Criteria + '</td><td>' + json.TermID + '</td><td>' + ModificationDate + '</td><td>' + CreationDate + '</td></tr>';
 
-                    console.log(json.Criteria + "  " + json.TermID + "  " + ModificationDate + "  " + CreationDate);
+                    //console.log(json.Criteria + "  " + json.TermID + "  " + ModificationDate + "  " + CreationDate);
                 });
-                $('#DrugDetailsTable tbody').html(tableRow);
+                var appendData = tableHeader + tableRow;
+                $('#DrugDetailsTable').html(appendData);
                 //Pagination
                 $('#DrugDetailsTable').DataTable();
-                //
-
             },
             error: function (err) {
                 alert('Something went wrong...!');
@@ -163,4 +204,3 @@
     }
 
 </script>
-
