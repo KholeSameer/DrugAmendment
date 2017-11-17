@@ -100,11 +100,12 @@
             data: { ClientName: clientName, CriteriaType: criteriaType },
             dataType: 'json',
             success: function (data) {
+
                 var json = JSON.stringify(data);
                 var tableRow = "";
                 var dynamicID = clientName.substring(clientName.indexOf(".") + 1);
                 var table = "<table id='DrugDetailsTable" + dynamicID + "'>";
-                var tableHeader = "<thead><tr><th>Criteria</th><th>TermID</th><th>Modification Date</th><th>Creation Date</th></tr ></thead >";
+                var tableHeader = "<thead><tr><th>Criteria</th><th>TermID</th><th>Modification Date</th><th>Creation Date</th><th>IsActive</th></tr ></thead >";
                 $.each(data, function (i, json) {
                     var date = null;
                     var CreationDate = null;
@@ -125,9 +126,9 @@
                             date.getMinutes();
                     }
 
-                    tableRow += '<tr><td>' + json.Criteria + '</td><td>' + json.TermID + '</td><td>' + ModificationDate + '</td><td>' + CreationDate + '</td></tr>';
+                    tableRow += '<tr><td>' + json.Criteria + '</td><td>' + json.TermID + '</td><td>' + ModificationDate + '</td><td>' + CreationDate + '</td><td>' + json.IsActive + '</td></tr>';
 
-                    //console.log(json.Criteria + "  " + json.TermID + "  " + ModificationDate + "  " + CreationDate);
+                    //console.log(json.CriteriaType + "  " + json.IsActive);
                 });
                 var appendData = table + tableHeader + tableRow;
                 appendData += "</table >";
