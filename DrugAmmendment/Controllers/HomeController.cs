@@ -355,7 +355,7 @@ namespace DrugAmmendment.Controllers
             List<DrugDetails> ddList = new List<DrugDetails>();
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select Criteria,TermID,ModificationDate,CreationDate from dbo.ADFeedSelectionCriteriaLookup where Delivery = '{0}' and CriteriaType = '{1}' and IsActive = 1", ClientName, CriteriaType), conn);     //To have active list change IsActive = 1;
+            SqlCommand cmd = new SqlCommand(string.Format("select * from dbo.ADFeedSelectionCriteriaLookup where Delivery = '{0}' and CriteriaType = '{1}'", ClientName, CriteriaType), conn);     //To have active list change IsActive = 1;
             try
             {
                 conn.Open();
@@ -363,30 +363,33 @@ namespace DrugAmmendment.Controllers
                 while (reader.Read())
                 {
                     DrugDetails dd = new DrugDetails();
-                    dd.Criteria = reader[0].ToString();
-                    if (reader[1].Equals(System.DBNull.Value))
+                    dd.Delivery = reader[0].ToString();
+                    dd.CriteriaType = reader[1].ToString();
+                    dd.Criteria = reader[2].ToString();
+                    dd.IsActive = Convert.ToInt32(reader[4]);
+                    if (reader[3].Equals(System.DBNull.Value))
                     {
                         dd.TermID = null;
                     }
                     else
                     {
-                        dd.TermID = Convert.ToInt32(reader[1]);
+                        dd.TermID = Convert.ToInt32(reader[3]);
                     }
-                    if (reader[2].Equals(System.DBNull.Value))
+                    if (reader[5].Equals(System.DBNull.Value))
                     {
                         dd.ModificationDate = null;
                     }
                     else
                     {
-                        dd.ModificationDate = Convert.ToDateTime(reader[2]);
+                        dd.ModificationDate = Convert.ToDateTime(reader[5]);
                     }
-                    if (reader[3].Equals(System.DBNull.Value))
+                    if (reader[6].Equals(System.DBNull.Value))
                     {
                         dd.CreationDate = null;
                     }
                     else
                     {
-                        dd.CreationDate = Convert.ToDateTime(reader[3]);
+                        dd.CreationDate = Convert.ToDateTime(reader[6]);
                     }
                     ddList.Add(dd);
                 }
