@@ -115,6 +115,10 @@
     <Content Include="DashBoard.aspx" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
+    <Content Include="Images\2757a746c5519d3.jpg" />
+    <Content Include="Images\AdobeStock_131071239.jpeg" />
+    <Content Include="Images\DrugImg.jpg" />
+    <Content Include="Images\Website-Background2.png" />
     <Content Include="Scripts\AddDrugView.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
