@@ -110,6 +110,7 @@
     </Content>
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\mountains-clouds-forest-fog.jpg" />
     <Content Include="Content\Site.css" />
     <Content Include="DashBoard.aspx" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
@@ -160,7 +161,6 @@
     <Content Include="Scripts\DataTables\datatables.min.css" />
     <Content Include="Scripts\DataTables\datatables.min.js" />
     <Content Include="Scripts\DeleteDrugView.js" />
-    <Content Include="Scripts\excelexportjs.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
     <Content Include="Scripts\jquery-1.10.2.min.js" />
     <Content Include="Scripts\jquery-ui.css" />
@@ -209,6 +209,7 @@
     </Compile>
     <Compile Include="Models\DetailedDrugs.cs" />
     <Compile Include="Models\DropDownClass.cs" />
+    <Compile Include="Models\ExportToExcel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

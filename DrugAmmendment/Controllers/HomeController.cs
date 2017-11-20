@@ -350,6 +350,60 @@ namespace DrugAmmendment.Controllers
             return Json(criteriaType, JsonRequestBehavior.AllowGet);
         }
 
+        public JsonResult GetActiveDrugList(string ClientName, string CriteriaType)
+        {
+            List<ExportToExcel> ddList = new List<ExportToExcel>();
+            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(connectionString);
+            SqlCommand cmd = new SqlCommand(string.Format("select * from dbo.ADFeedSelectionCriteriaLookup where Delivery = '{0}' and CriteriaType = '{1}' and IsActive = 1", ClientName, CriteriaType), conn);     //To have active list change IsActive = 1;
+            try
+            {
+                conn.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    ExportToExcel dd = new ExportToExcel();
+                    dd.Delivery = reader[0].ToString();
+                    dd.CriteriaType = reader[1].ToString();
+                    dd.Criteria = reader[2].ToString();
+                    if (reader[3].Equals(System.DBNull.Value))
+                    {
+                        dd.TermID = null;
+                    }
+                    else
+                    {
+                        dd.TermID = Convert.ToInt32(reader[3]);
+                    }
+                    if (reader[5].Equals(System.DBNull.Value))
+                    {
+                        dd.ModificationDate = "Null";
+                    }
+                    else
+                    {
+                        dd.ModificationDate = reader[5].ToString();
+                    }
+                    if (reader[6].Equals(System.DBNull.Value))
+                    {
+                        dd.CreationDate = "Null";
+                    }
+                    else
+                    {
+                        dd.CreationDate = reader[6].ToString();
+                    }
+                    ddList.Add(dd);
+                }
+            }
+            catch (Exception e)
+            {
+                Response.Write(e.Message);
+            }
+            finally
+            {
+                conn.Close();
+            }
+            return Json(ddList, JsonRequestBehavior.AllowGet);
+        }
+
         public JsonResult GetDrugList(string ClientName, string CriteriaType)
         {
             List<DrugDetails> ddList = new List<DrugDetails>();
@@ -404,6 +458,7 @@ namespace DrugAmmendment.Controllers
             }
             return Json(ddList, JsonRequestBehavior.AllowGet);
         }
+
 
         public ActionResult DeleteDrugView()
         {
