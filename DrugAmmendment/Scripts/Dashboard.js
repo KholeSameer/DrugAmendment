@@ -128,15 +128,16 @@
                         date = new Date(parseInt(json.CreationDate.substr(6)));
                         CreationDate = date.getFullYear() + "-" +
                             ("0" + (date.getMonth() + 1)).slice(-2) + "-" +
-                            ("0" + date.getDate()).slice(-2) + " " + date.getHours() + ":" +
-                            date.getMinutes();
+                            ("0" + date.getDate()).slice(-2) + " " + (date.getHours() < 10 ? '0' : '') + date.getHours() + ":" +
+                            (date.getMinutes() < 10 ? '0' : '') + date.getMinutes();
+                        
                     }
                     if (json.ModificationDate != null) {
                         date = new Date(parseInt(json.ModificationDate.substr(6)));
                         ModificationDate = date.getFullYear() + "-" +
                             ("0" + (date.getMonth() + 1)).slice(-2) + "-" +
-                            ("0" + date.getDate()).slice(-2) + " " + date.getHours() + ":" +
-                            date.getMinutes();
+                            ("0" + date.getDate()).slice(-2) + " " + (date.getHours() < 10 ? '0' : '') + date.getHours() + ":" +
+                            (date.getMinutes() < 10 ? '0' : '') + date.getMinutes();
                     }
 
                     tableRow += '<tr><td>' + json.Criteria + '</td><td>' + ModificationDate + '</td><td>' + CreationDate + '</td><td>' + json.IsActive + '</td></tr>';
