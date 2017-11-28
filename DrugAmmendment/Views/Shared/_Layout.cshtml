@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title For Drug Ammendment</title>
+    <title>@ViewBag.Title For Drug Amendment</title>
     <link href="~/Content/Site.css" rel="stylesheet" type="text/css" />
     <link href="~/Content/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <script src="~/Scripts/modernizr-2.6.2.js"></script>
@@ -11,6 +11,19 @@
         body {
             background-image: url('../../Images/DrugImg.jpg');
             background-size: cover;
+            background-repeat: no-repeat;
+        }
+        .Logo{
+            float:right;
+            margin-top:13px;
+        }
+        .HomeLink {
+            font-size: 25px;
+            color: #002751;
+            margin-top:10px;
+        }
+        .body-content{
+            margin-top:20px;
         }
     </style>
 </head>
@@ -23,11 +36,10 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                @Html.ActionLink("Drug Ammendment", "Dashboard", "Home", new { area = "" }, new { @class = "navbar-brand" })
+                <a href="@Url.Action("Dashboard", "Home")" class="navbar-brand HomeLink">Drug Amendment</a>
             </div>
-            <div class="navbar-collapse collapse">
-                <ul class="nav navbar-nav">
-                </ul>
+            <div class="navbar-collapse collapse clearfix">
+                <img class="Logo" src="~/Images/adis_logo.png"/>
             </div>
         </div>
     </div>

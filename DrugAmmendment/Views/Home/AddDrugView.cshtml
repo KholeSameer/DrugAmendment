@@ -10,7 +10,6 @@
     <form action="@Url.Action("AddDrug", "Home")" method="post">
         <div class="col-lg-offset-4 col-md-6">
             <label>Delivery: </label>
-            @*<input type="text" name="client" id="client" value="@ViewBag.client" readonly class="form-control" />*@
             <input type="text" name="client" id="client" value="@TempData["Client"]" readonly class="form-control" />
             <label>Citeria Type: </label>
             <input type="text" name="criteriaType" id="criteriaType" value="@TempData["CriteriaType"]" readonly class="form-control" />

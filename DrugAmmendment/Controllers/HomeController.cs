@@ -46,7 +46,17 @@ namespace DrugAmmendment.Controllers
 
             if (criteriaType == "BrandName")
             {
-                Response.Write("BrandName is Here");
+                //Response.Write("BrandName is Here");
+                bool isAvailableNonActive = CheckIsAvailableNonActive(delivery,criteriaType, criteriaFromUser);
+                if (isAvailableNonActive)
+                {
+                    UpdateToActive(delivery, criteriaType, criteriaFromUser);
+                }
+                else
+                {
+                    CheckIsAvailableActive(delivery, criteriaType, criteriaFromUser, null);
+                }
+
             }
             else
             {
@@ -55,7 +65,7 @@ namespace DrugAmmendment.Controllers
                 {
                     ArrayList ThesData = GetDataFromThesTerm(criteriaFromUser);
                     string criteria = ThesData[0].ToString();
-                    int termID = Convert.ToInt32(ThesData[1]);
+                    int? termID = Convert.ToInt32(ThesData[1]);
 
                     bool isAvailableNonActive = CheckIsAvailableNonActive(delivery, criteriaType, criteria);
                     if (isAvailableNonActive)
@@ -76,7 +86,7 @@ namespace DrugAmmendment.Controllers
             }
         }
 
-        private void CheckIsAvailableActive(string delivery, string criteriaType, string criteria, int termID)
+        private void CheckIsAvailableActive(string delivery, string criteriaType, string criteria, int? termID)
         {
             TempData["Client"] = delivery;
             TempData["CriteriaType"] = criteriaType;
@@ -144,7 +154,7 @@ namespace DrugAmmendment.Controllers
             }
             else
             {
-                Response.Write("<script>window.alert(\'Drug Not Updated\');window.location='Dashboard';</script>");
+                Response.Write("<script>window.alert(\'Drug Not Updated...! May be this drug is not present in DB...!\');window.location='AddDrugView';</script>");
             }
             
         }
@@ -244,23 +254,29 @@ namespace DrugAmmendment.Controllers
             return data;
         }
 
-        private void AddDrugToDB(string delivery, string criteriaType, string criteria, int termID)
+        private void AddDrugToDB(string delivery, string criteriaType, string criteria, int? termID)
         {
             TempData["Client"] = delivery;
             TempData["CriteriaType"] = criteriaType;
-
+            SqlCommand cmd = new SqlCommand();
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}',{3},{4},GETDATE(),GETDATE())", delivery, criteriaType, criteria, termID, 1), conn);
+            if (termID == null)
+            {
+                cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}','',{3},GETDATE(),GETDATE())", delivery, criteriaType, criteria, 1), conn);
+            }
+            else { 
+                cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}',{3},{4},GETDATE(),GETDATE())", delivery, criteriaType, criteria, termID, 1), conn);
+            }
             int RA = 0;
             try
             {
                 conn.Open();
                 RA = cmd.ExecuteNonQuery();
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                Response.Write("<script>window.alert(\'Drug " + criteria + " is already present in " + delivery + " Table.Errrrrrrrrrrrrrr\');window.location='Dashboard';</script>");
+                Response.Write("<script>window.alert(\'Drug " + criteria + " is already present in " + delivery + " Table." + e.Message + "\');window.location='Dashboard';</script>");
             }
             finally {
                 conn.Close();
