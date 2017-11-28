@@ -35,7 +35,7 @@
     }
    
 </style>
-<h2>Dashboard</h2>
+
 
     <form action="@Url.Action("AddDrugView", "Home")" id="DashboardForm" method="post">
         <select id="client" class="form-control" name="Client" required>
@@ -46,10 +46,12 @@
             <option value="">Select Criteria Type</option>
         </select>
 
-        <input type="button" name="activeDrugs" value="Get Drug List" id="activeDrugsBtn" class="btn-primary btn-lg" />
-        <input type="submit" name="addDrug" value="Add New Drug" id="addDrugBtn" class="btn-primary btn-lg" />
-        <input type="button" name="deleteDrug" value="Delete Drug" id="deleteDrugBtn" class="btn-primary btn-lg" />
-        <input type="button" name="exportToExcel" value="Export To Excel" id="exportToExcel" class="btn-primary btn-lg" />
+        <input type="button" name="activeDrugs" value="Get Drug List" id="activeDrugsBtn" class="btn-primary btn-lg" title="Get All Drug Details" />
+        <input type="submit" name="addDrug" value="Add New Drug" id="addDrugBtn" class="btn-primary btn-lg" title="Add New Drug" />
+        <input type="button" name="deleteDrug" value="Delete Drug" id="deleteDrugBtn" class="btn-primary btn-lg" title="Delete Drug" />
+        <input type="button" name="exportToExcel" value="Export To Excel" id="exportToExcel" class="btn-primary btn-lg" title="Export Active Drugs to Excelsheet" />
+            
+        
 
         <div id="DrugDetailsDiv" >
 

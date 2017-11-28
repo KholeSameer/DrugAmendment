@@ -26,6 +26,6 @@
                             }
                         });
                     },
-                    minLength: 2
+                    minLength: 3
                 });
             });

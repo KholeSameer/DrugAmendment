@@ -118,7 +118,7 @@
                 var tableRow = "";
                 var dynamicID = clientName.substring(clientName.indexOf(".") + 1);
                 var table = "<table id='DrugDetailsTable" + dynamicID + "'>";
-                var tableHeader = "<thead><tr><th>Criteria</th><th>TermID</th><th>Modification Date</th><th>Creation Date</th><th>IsActive</th></tr ></thead >";
+                var tableHeader = "<thead><tr><th>Criteria</th><th>Modification Date</th><th>Creation Date</th><th>IsActive</th></tr ></thead >";
                 $.each(data, function (i, json) {
                     var date = null;
                     var CreationDate = null;
@@ -139,7 +139,7 @@
                             date.getMinutes();
                     }
 
-                    tableRow += '<tr><td>' + json.Criteria + '</td><td>' + json.TermID + '</td><td>' + ModificationDate + '</td><td>' + CreationDate + '</td><td>' + json.IsActive + '</td></tr>';
+                    tableRow += '<tr><td>' + json.Criteria + '</td><td>' + ModificationDate + '</td><td>' + CreationDate + '</td><td>' + json.IsActive + '</td></tr>';
 
                     //console.log(json.CriteriaType + "  " + json.IsActive);
                 });
@@ -182,10 +182,12 @@
                 var json = JSON.stringify(data);
                 var dynamicFileName = clientName.substring(clientName.indexOf(".") + 1);
                 dynamicFileName = dynamicFileName.charAt(0).toUpperCase() + dynamicFileName.slice(1);
-                JSONToCSVConvertor(data, dynamicFileName + "_" + criteriaType , true);
-                $.each(data, function (i, json) {
-                    console.log(json.Criteria);
-                });
+                dynamicFileName += "_" + criteriaType + "_" + (new Date($.now())).toString().slice(0, -31).slice(4);
+                JSONToCSVConvertor(data, dynamicFileName , true);
+
+                //$.each(data, function (i, json) {
+                //    console.log(json.Criteria);
+                //});
             },
             error: function (err) {
                 alert('Something went wrong...!');
