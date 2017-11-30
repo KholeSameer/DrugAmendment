@@ -46,7 +46,6 @@ namespace DrugAmmendment.Controllers
 
             if (criteriaType == "BrandName")
             {
-                //Response.Write("BrandName is Here");
                 bool isAvailableNonActive = CheckIsAvailableNonActive(delivery,criteriaType, criteriaFromUser);
                 if (isAvailableNonActive)
                 {
@@ -150,6 +149,7 @@ namespace DrugAmmendment.Controllers
 
             if (RA > 0 )
             {
+                AuditLogger(delivery, criteriaType, criteria, "Active");
                 Response.Write("<script>window.alert(\'Drug Updated to Active Successfully\');window.location='AddDrugView';</script>");
             }
             else
@@ -263,7 +263,7 @@ namespace DrugAmmendment.Controllers
             SqlConnection conn = new SqlConnection(connectionString);
             if (termID == null)
             {
-                cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}','',{3},GETDATE(),GETDATE())", delivery, criteriaType, criteria, 1), conn);
+                cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}',null,{3},GETDATE(),GETDATE())", delivery, criteriaType, criteria, 1), conn);
             }
             else { 
                 cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}',{3},{4},GETDATE(),GETDATE())", delivery, criteriaType, criteria, termID, 1), conn);
@@ -284,14 +284,81 @@ namespace DrugAmmendment.Controllers
                          
             if (RA > 0)
             {
+                AuditLogger(delivery, criteriaType, criteria, "Add");
                 Response.Write("<script>window.alert(\'Drug Added Successfully\');window.location='AddDrugView';</script>");
             }
             else
             {
-                Response.Write("<script>window.alert(\'Drug Not Added in DB\');window.location='Dashboard';</script>");
+                Response.Write("<script>window.alert(\'Drug Not Added in DB..! Already present in DB.\');window.location='AddDrugView';</script>");
             }
         }
-        
+
+
+        private void AuditLogger(string Delivery, string CriteriaType, string Criteria, string ActionType)
+        {
+            int? TermID = 0;
+            TermID = GetTermID(Delivery,CriteriaType,Criteria);
+            int RA = 0;
+            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(connectionString);
+            SqlCommand logCmd = null;
+            if (TermID == 0)
+            {
+                 logCmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaHistory] values('{0}','{1}','{2}',null,'{3}',GETDATE(),'{4}')", Delivery, CriteriaType, Criteria, ActionType, Environment.UserName), conn);
+            }
+            else
+            {
+                logCmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaHistory] values('{0}','{1}','{2}',{3},'{4}',GETDATE(),'{5}')", Delivery, CriteriaType, Criteria, TermID, ActionType, Environment.UserName), conn);
+            }
+            
+            try
+            {
+                conn.Open();
+                RA = logCmd.ExecuteNonQuery();
+            }
+            catch (Exception e)
+            {
+                Response.Write(e.Message);
+            }
+            finally
+            {
+                conn.Close();
+            }
+        }
+
+        private int? GetTermID(string delivery, string criteriaType, string criteria)
+        {
+            int? TermID = 0;
+            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
+            SqlConnection conn = new SqlConnection(connectionString);
+            SqlCommand cmd = new SqlCommand(string.Format("select TermID from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}'",delivery,criteriaType,criteria), conn);
+            try
+            {
+                conn.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    if (reader[0].Equals(System.DBNull.Value))
+                    {
+                        TermID = 0;
+                    }
+                    else
+                    {
+                        TermID = Convert.ToInt32(reader[0]);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Response.Write(e.Message);
+            }
+            finally
+            {
+                conn.Close();
+            }
+            return TermID;
+        }
+
         [HttpGet]
         public JsonResult PopulateClients()
         {
@@ -508,6 +575,7 @@ namespace DrugAmmendment.Controllers
 
                 if (RA > 0)
                 {
+                    AuditLogger(Delivery, CriteriaType, Criteria, "NonActive");
                     Response.Write("<script>window.alert(\'Drug Deleted Successfully...! Set IsActive to Zero\');window.location='DeleteDrugView';</script>");
                 }
                 else

@@ -141,8 +141,6 @@
                     }
 
                     tableRow += '<tr><td>' + json.Criteria + '</td><td>' + ModificationDate + '</td><td>' + CreationDate + '</td><td>' + json.IsActive + '</td></tr>';
-
-                    //console.log(json.CriteriaType + "  " + json.IsActive);
                 });
                 var appendData = table + tableHeader + tableRow;
                 appendData += "</table >";
@@ -185,10 +183,6 @@
                 dynamicFileName = dynamicFileName.charAt(0).toUpperCase() + dynamicFileName.slice(1);
                 dynamicFileName += "_" + criteriaType + "_" + (new Date($.now())).toString().slice(0, -31).slice(4);
                 JSONToCSVConvertor(data, dynamicFileName , true);
-
-                //$.each(data, function (i, json) {
-                //    console.log(json.Criteria);
-                //});
             },
             error: function (err) {
                 alert('Something went wrong...!');
