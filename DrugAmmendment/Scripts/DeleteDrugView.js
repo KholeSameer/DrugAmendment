@@ -10,9 +10,6 @@
                             contentType: "application/json; charset=utf-8",
                             dataFilter: function (data) { return data; },
                             success: function (data) {
-
-                                //console.log(data);
-
                                 response($.map(data, function (item) {
                                     return {
                                         label: item,
@@ -26,6 +23,6 @@
                             }
                         });
                     },
-                    minLength: 3
+                    minLength: 2
                 });
             });
