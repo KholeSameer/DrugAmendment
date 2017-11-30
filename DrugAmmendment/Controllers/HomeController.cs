@@ -90,7 +90,7 @@ namespace DrugAmmendment.Controllers
             TempData["Client"] = delivery;
             TempData["CriteriaType"] = criteriaType;
 
-            int RA = 0;
+            int rowsAffected = 0;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             SqlCommand cmd = new SqlCommand(string.Format("select Criteria FROM [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}' and IsActive = 1 ", delivery, criteriaType, criteria), conn);
@@ -100,7 +100,7 @@ namespace DrugAmmendment.Controllers
                 SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    RA = 1;
+                    rowsAffected = 1;
                 }
             }
             catch (Exception)
@@ -112,7 +112,7 @@ namespace DrugAmmendment.Controllers
                 conn.Close();
             }
 
-            if (RA > 0)
+            if (rowsAffected > 0)
             {
                 Response.Write("<script>window.alert(\'This drug is already Present & Active in the DB...!');window.location='AddDrugView'</script>");
             }
@@ -127,7 +127,7 @@ namespace DrugAmmendment.Controllers
         {
             TempData["Client"] = delivery;
             TempData["CriteriaType"] = criteriaType;
-            int RA = 0;
+            int rowsAffected = 0;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             
@@ -135,7 +135,7 @@ namespace DrugAmmendment.Controllers
             try
             {
                 conn.Open();
-                RA = cmd.ExecuteNonQuery();
+                rowsAffected = cmd.ExecuteNonQuery();
             }
             catch (Exception e)
             {
@@ -147,7 +147,7 @@ namespace DrugAmmendment.Controllers
                 conn.Close();
             }
 
-            if (RA > 0 )
+            if (rowsAffected > 0 )
             {
                 AuditLogger(delivery, criteriaType, criteria, "Active");
                 Response.Write("<script>window.alert(\'Drug Updated to Active Successfully\');window.location='AddDrugView';</script>");
@@ -268,28 +268,28 @@ namespace DrugAmmendment.Controllers
             else { 
                 cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}',{3},{4},GETDATE(),GETDATE())", delivery, criteriaType, criteria, termID, 1), conn);
             }
-            int RA = 0;
+            int rowsAffected = 0;
             try
             {
                 conn.Open();
-                RA = cmd.ExecuteNonQuery();
+                rowsAffected = cmd.ExecuteNonQuery();
             }
             catch (Exception e)
             {
-                Response.Write("<script>window.alert(\'Drug " + criteria + " is already present in " + delivery + " Table." + e.Message + "\');window.location='Dashboard';</script>");
+                Response.Write("<script>window.alert(\'Drug is not added. Something went wrong. Exception Occurred.\');window.location='Dashboard';</script>");
             }
             finally {
                 conn.Close();
             }
                          
-            if (RA > 0)
+            if (rowsAffected > 0)
             {
                 AuditLogger(delivery, criteriaType, criteria, "Add");
                 Response.Write("<script>window.alert(\'Drug Added Successfully\');window.location='AddDrugView';</script>");
             }
             else
             {
-                Response.Write("<script>window.alert(\'Drug Not Added in DB..! Already present in DB.\');window.location='AddDrugView';</script>");
+                Response.Write("<script>window.alert(\'Drug is not added.Something went wrong.\');window.location='AddDrugView';</script>");
             }
         }
 
@@ -298,7 +298,7 @@ namespace DrugAmmendment.Controllers
         {
             int? TermID = 0;
             TermID = GetTermID(Delivery,CriteriaType,Criteria);
-            int RA = 0;
+            int rowsAffected = 0;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             SqlCommand logCmd = null;
@@ -314,7 +314,7 @@ namespace DrugAmmendment.Controllers
             try
             {
                 conn.Open();
-                RA = logCmd.ExecuteNonQuery();
+                rowsAffected = logCmd.ExecuteNonQuery();
             }
             catch (Exception e)
             {
@@ -555,14 +555,14 @@ namespace DrugAmmendment.Controllers
             }
             else
             {
-                int RA = 0;
+                int rowsAffected = 0;
                 string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
                 SqlConnection conn = new SqlConnection(connectionString);
                 SqlCommand cmd = new SqlCommand(string.Format("update [dbo].[ADFeedSelectionCriteriaLookup] set IsActive = 0 , ModificationDate = GETDATE() where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}'", Delivery, CriteriaType, Criteria), conn);
                 try
                 {
                     conn.Open();
-                    RA = cmd.ExecuteNonQuery();
+                    rowsAffected = cmd.ExecuteNonQuery();
                 }
                 catch (Exception e)
                 {
@@ -573,7 +573,7 @@ namespace DrugAmmendment.Controllers
                     conn.Close();
                 }
 
-                if (RA > 0)
+                if (rowsAffected > 0)
                 {
                     AuditLogger(Delivery, CriteriaType, Criteria, "NonActive");
                     Response.Write("<script>window.alert(\'Drug Deleted Successfully...! Set IsActive to Zero\');window.location='DeleteDrugView';</script>");
@@ -587,7 +587,7 @@ namespace DrugAmmendment.Controllers
 
         private bool CheckIsAvailableAndDeleted(string delivery, string criteria, string criteriaType)
         {
-            int RA = 0;
+            int rowsAffected = 0;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             SqlCommand cmd = new SqlCommand(string.Format("select Criteria from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}' and IsActive = 0", delivery, criteriaType, criteria), conn);
@@ -597,7 +597,7 @@ namespace DrugAmmendment.Controllers
                 SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    RA = 1;
+                    rowsAffected = 1;
                 }
 
             }
@@ -609,7 +609,7 @@ namespace DrugAmmendment.Controllers
             {
                 conn.Close();
             }
-            if (RA > 0)
+            if (rowsAffected > 0)
             {
                 return true;
             }
