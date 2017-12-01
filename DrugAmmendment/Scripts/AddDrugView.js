@@ -25,7 +25,7 @@ $(document).ready(function () {
 
                         },
                         error: function (err) {
-                            alert(err + "   Some Error Message");
+                            alert(err + " Something went wrong while fetching the data.");
                         }
                     });
                 },
@@ -33,5 +33,10 @@ $(document).ready(function () {
             });
         });
     }
+    $("#criteria").on("keydown", function (e) {
+        var char = $("#criteria").val().length;
+        if (char == 0)
+            return e.which !== 32;
+    });
 })
             
