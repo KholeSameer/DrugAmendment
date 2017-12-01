@@ -40,7 +40,7 @@ namespace DrugAmmendment.Controllers
         [HttpPost]
         public void AddDrug(FormCollection form)
         {
-            string criteriaFromUser = form["criteria"];
+            string criteriaFromUser = form["criteria"].Trim();
             string delivery = form["client"];
             string criteriaType = form["criteriaType"];
 
@@ -93,7 +93,7 @@ namespace DrugAmmendment.Controllers
             int rowsAffected = 0;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select Criteria FROM [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}' and IsActive = 1 ", delivery, criteriaType, criteria), conn);
+            SqlCommand cmd = new SqlCommand($"select Criteria FROM [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{delivery}' and CriteriaType = '{criteriaType}' and Criteria = '{criteria}' and IsActive = 1 ", conn);
             try
             {
                 conn.Open();
@@ -131,15 +131,19 @@ namespace DrugAmmendment.Controllers
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             
-            SqlCommand cmd = new SqlCommand(string.Format("update [dbo].[ADFeedSelectionCriteriaLookup] set IsActive = 1, ModificationDate = GETDATE() where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}'", delivery, criteriaType, criteria), conn);
+            SqlCommand cmd = new SqlCommand($"update [dbo].[ADFeedSelectionCriteriaLookup] set IsActive = 1, ModificationDate = GETDATE() where Delivery = '{delivery}' and CriteriaType = '{criteriaType}' and Criteria = '{criteria}'", conn);
             try
             {
                 conn.Open();
                 rowsAffected = cmd.ExecuteNonQuery();
             }
+            catch (SqlException e)
+            {
+                Response.Write("<script>window.alert(\'You are not allowed to do changes in Database.\');window.location='AddDrugView';</script>");
+            }
             catch (Exception e)
             {
-                Response.Write("<script>window.alert(\'Exception Occurred.\');window.location='AddDrugView';</script>");
+                Response.Write("<script>window.alert(\'Other Exception Occurred.\');window.location='AddDrugView';</script>");
             }
             finally
             {
@@ -164,7 +168,7 @@ namespace DrugAmmendment.Controllers
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
             
-            SqlCommand cmd = new SqlCommand(string.Format("select Criteria FROM [dbo].[ADFeedSelectionCriteriaLookup] where Criteria  = '{0}' and CriteriaType = '{1}' and Delivery = '{2}' and IsActive = 0", criteria,criteriaType, delivery), conn);
+            SqlCommand cmd = new SqlCommand($"select Criteria FROM [dbo].[ADFeedSelectionCriteriaLookup] where Criteria  = '{criteria}' and CriteriaType = '{criteriaType}' and Delivery = '{delivery}' and IsActive = 0", conn);
             try
             {
                 conn.Open();
@@ -197,7 +201,7 @@ namespace DrugAmmendment.Controllers
             bool flag = false ;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select LeadTerm FROM [dbo].[THSTerm] where LeadTerm  like '{0}'", criteria), conn);
+            SqlCommand cmd = new SqlCommand($"select LeadTerm FROM [dbo].[THSTerm] where LeadTerm  like '{criteria}'", conn);
             try
             {
                 conn.Open();
@@ -231,7 +235,7 @@ namespace DrugAmmendment.Controllers
             ArrayList data = new ArrayList();
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select LeadTerm, TermID from [dbo].[THSTerm] where LeadTerm = '{0}'", criteria), conn);
+            SqlCommand cmd = new SqlCommand($"select LeadTerm, TermID from [dbo].[THSTerm] where LeadTerm = '{criteria}'", conn);
             try
             {
                 conn.Open();
@@ -262,10 +266,10 @@ namespace DrugAmmendment.Controllers
             SqlConnection conn = new SqlConnection(connectionString);
             if (termID == null)
             {
-                cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}',null,{3},GETDATE(),GETDATE())", delivery, criteriaType, criteria, 1), conn);
+                cmd = new SqlCommand($"insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{delivery}','{criteriaType}','{criteria}',null,{1},GETDATE(),GETDATE())", conn);
             }
             else { 
-                cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}',{3},{4},GETDATE(),GETDATE())", delivery, criteriaType, criteria, termID, 1), conn);
+                cmd = new SqlCommand($"insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{delivery}','{criteriaType}','{criteria}',{termID},{1},GETDATE(),GETDATE())", conn);
             }
             int rowsAffected = 0;
             try
@@ -307,11 +311,11 @@ namespace DrugAmmendment.Controllers
             SqlCommand logCmd = null;
             if (TermID == 0)
             {
-                 logCmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaHistory] values('{0}','{1}','{2}',null,'{3}',GETDATE(),'{4}')", Delivery, CriteriaType, Criteria, ActionType, Environment.UserName), conn);
+                 logCmd = new SqlCommand($"insert into [dbo].[ADFeedSelectionCriteriaHistory] values('{Delivery}','{CriteriaType}','{Criteria}',null,'{ActionType}',GETDATE(),'{Environment.UserName}')", conn);
             }
             else
             {
-                logCmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaHistory] values('{0}','{1}','{2}',{3},'{4}',GETDATE(),'{5}')", Delivery, CriteriaType, Criteria, TermID, ActionType, Environment.UserName), conn);
+                logCmd = new SqlCommand($"insert into [dbo].[ADFeedSelectionCriteriaHistory] values('{Delivery}','{CriteriaType}','{Criteria}',{TermID},'{ActionType}',GETDATE(),'{Environment.UserName}')", conn);
             }
             
             try
@@ -321,7 +325,7 @@ namespace DrugAmmendment.Controllers
             }
             catch (Exception e)
             {
-                Response.Write(e.Message);
+                Response.Write("<script>window.alert(\'Something went wrong while logging the events.\');window.location='AddDrugView';</script>");
             }
             finally
             {
@@ -334,7 +338,7 @@ namespace DrugAmmendment.Controllers
             int? TermID = 0;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select TermID from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}'",delivery,criteriaType,criteria), conn);
+            SqlCommand cmd = new SqlCommand($"select TermID from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{delivery}' and CriteriaType = '{criteriaType}' and Criteria = '{criteria}'", conn);
             try
             {
                 conn.Open();
@@ -380,7 +384,7 @@ namespace DrugAmmendment.Controllers
             }
             catch (Exception e)
             {
-                Response.Write(e.Message);
+                Response.Write("<script>window.alert(\'Something went wrong while fetching the Customer List\');window.location='DeleteDrugView';</script>");
             }
             finally
             {
@@ -395,7 +399,7 @@ namespace DrugAmmendment.Controllers
             List<SelectListItem> criteriaType = new List<SelectListItem>();
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select Distinct CriteriaType from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}'", ClientName),conn);
+            SqlCommand cmd = new SqlCommand($"select Distinct CriteriaType from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{ClientName}'",conn);
             try
             {
                 conn.Open();
@@ -407,7 +411,7 @@ namespace DrugAmmendment.Controllers
             }
             catch (Exception e)
             {
-                Response.Write(e.Message);
+                Response.Write("<script>window.alert(\'Something went wrong while fetching the Criteria Type List\');window.location='DeleteDrugView';</script>");
             }
             finally
             {
@@ -421,7 +425,7 @@ namespace DrugAmmendment.Controllers
             List<ExportToExcel> ddList = new List<ExportToExcel>();
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select * from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and IsActive = 1", ClientName, CriteriaType), conn);     //To have active list change IsActive = 1;
+            SqlCommand cmd = new SqlCommand($"select * from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{ClientName}' and CriteriaType = '{CriteriaType}' and IsActive = 1", conn);     //To have active list change IsActive = 1;
             try
             {
                 conn.Open();
@@ -475,7 +479,7 @@ namespace DrugAmmendment.Controllers
             List<DrugDetails> ddList = new List<DrugDetails>();
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select * from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}'", ClientName, CriteriaType), conn);     //To have active list change IsActive = 1;
+            SqlCommand cmd = new SqlCommand($"select * from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{ClientName}' and CriteriaType = '{CriteriaType}'", conn);     //To have active list change IsActive = 1;
             try
             {
                 conn.Open();
@@ -544,7 +548,7 @@ namespace DrugAmmendment.Controllers
 
         public void DeleteDrug(FormCollection form)
         {
-            string Criteria = form["criteria"];
+            string Criteria = form["criteria"].Trim();
             string CriteriaType = form["criteriaType"];
             string Delivery = form["client"];
 
@@ -561,7 +565,7 @@ namespace DrugAmmendment.Controllers
                 int rowsAffected = 0;
                 string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
                 SqlConnection conn = new SqlConnection(connectionString);
-                SqlCommand cmd = new SqlCommand(string.Format("update [dbo].[ADFeedSelectionCriteriaLookup] set IsActive = 0 , ModificationDate = GETDATE() where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}'", Delivery, CriteriaType, Criteria), conn);
+                SqlCommand cmd = new SqlCommand($"update [dbo].[ADFeedSelectionCriteriaLookup] set IsActive = 0 , ModificationDate = GETDATE() where Delivery = '{Delivery}' and CriteriaType = '{CriteriaType}' and Criteria = '{Criteria}'", conn);
                 try
                 {
                     conn.Open();
@@ -569,7 +573,7 @@ namespace DrugAmmendment.Controllers
                 }
                 catch (SqlException e)
                 {
-                    Response.Write("<script>window.alert(\'You are not allowed to make changes in database.\');window.location='DeleteDrugView';</script>");
+                    Response.Write("<script>window.alert(\'You are not allowed to make changes in Database.\');window.location='DeleteDrugView';</script>");
                 }
                 catch (Exception e)
                 {
@@ -597,7 +601,7 @@ namespace DrugAmmendment.Controllers
             int rowsAffected = 0;
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select Criteria from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}' and IsActive = 0", delivery, criteriaType, criteria), conn);
+            SqlCommand cmd = new SqlCommand($"select Criteria from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{delivery}' and CriteriaType = '{criteriaType}' and Criteria = '{criteria}' and IsActive = 0", conn);
             try
             {
                 conn.Open();
@@ -632,7 +636,7 @@ namespace DrugAmmendment.Controllers
             List<string> CriteriaList = new List<string>();
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("SELECT distinct Criteria FROM [dbo].[ADFeedSelectionCriteriaLookup] WHERE Delivery = '{0}' and  CriteriaType = '{1}' and Criteria LIKE '%{2}%' and IsActive = 1", delivery, criteriaType, criteria), conn);
+            SqlCommand cmd = new SqlCommand($"SELECT distinct Criteria FROM [dbo].[ADFeedSelectionCriteriaLookup] WHERE Delivery = '{delivery}' and  CriteriaType = '{criteriaType}' and Criteria LIKE '%{criteria}%' and IsActive = 1", conn);
             try
             {
                 conn.Open();
@@ -655,10 +659,11 @@ namespace DrugAmmendment.Controllers
 
         public JsonResult GetAutoTHSTerm(string criteria, string delivery, string criteriaType)
         {
+            criteria = criteria.TrimEnd();
             List<string> LeadTermList = new List<string>();
             string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select leadterm from [dbo].[THSTerm] where LeadTerm like '%{0}%' and IsApproved = 'Y'", criteria), conn);
+            SqlCommand cmd = new SqlCommand($"select leadterm from [dbo].[THSTerm] where LeadTerm like '%{criteria}%' and IsApproved = 'Y'", conn);
             try
             {
                 conn.Open();
