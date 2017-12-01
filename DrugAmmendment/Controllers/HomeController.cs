@@ -139,8 +139,7 @@ namespace DrugAmmendment.Controllers
             }
             catch (Exception e)
             {
-                string err = e.Message;
-                Response.Write("<script>window.alert("+ err+ " \'Exception Occurred...! Please try again...!\');window.location='AddDrugView';</script>");
+                Response.Write("<script>window.alert(\'Exception Occurred.\');window.location='AddDrugView';</script>");
             }
             finally
             {
@@ -273,6 +272,10 @@ namespace DrugAmmendment.Controllers
             {
                 conn.Open();
                 rowsAffected = cmd.ExecuteNonQuery();
+            }
+            catch (SqlException e)
+            {
+                Response.Write("<script>window.alert(\'You are not allowed to do changes in Database.\');window.location='AddDrugView';</script>");
             }
             catch (Exception e)
             {
@@ -563,6 +566,10 @@ namespace DrugAmmendment.Controllers
                 {
                     conn.Open();
                     rowsAffected = cmd.ExecuteNonQuery();
+                }
+                catch (SqlException e)
+                {
+                    Response.Write("<script>window.alert(\'You are not allowed to make changes in database.\');window.location='DeleteDrugView';</script>");
                 }
                 catch (Exception e)
                 {
