@@ -25,7 +25,6 @@ $(document).ready(function () {
 
                         },
                         error: function (err) {
-                            debugger;
                             alert(err + "   Some Error Message");
                         }
                     });
