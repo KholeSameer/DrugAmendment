@@ -46,6 +46,7 @@ namespace DrugAmmendment.Controllers
         [HttpPost]
         public void AddDrug(FormCollection form)
         {
+
                 string criteriaFromUser = form["criteria"].Trim();
                 string delivery = form["client"];
                 string criteriaType = form["criteriaType"];
@@ -139,6 +140,7 @@ namespace DrugAmmendment.Controllers
             TempData["Client"] = delivery;
             TempData["CriteriaType"] = criteriaType;
 
+
             try
             {
                 if (_drugAmendmentConnectionService.CheckIsAvailableActive(delivery, criteriaType, criteria, termID) > 0)
@@ -195,6 +197,7 @@ namespace DrugAmmendment.Controllers
         private bool ValidateLeadTerm(string criteria)
         {
             bool _flag = false ;
+
             try
             {
                 _flag = _drugAmendmentConnectionService.ValidateLeadTerm(criteria);
@@ -209,6 +212,7 @@ namespace DrugAmmendment.Controllers
         private ArrayList GetDataFromThesTerm(string criteria)
         {
             ArrayList data = new ArrayList();
+
             try
             {
                 data  = _drugAmendmentConnectionService.GetDataFromThesTerm(criteria);
@@ -247,6 +251,7 @@ namespace DrugAmmendment.Controllers
             TempData["Client"] = Delivery;
             TempData["CriteriaType"] = CriteriaType;
 
+
             try
             {
                 _drugAmendmentConnectionService.AuditLogger(Delivery,CriteriaType,Criteria,ActionType);
@@ -280,6 +285,7 @@ namespace DrugAmmendment.Controllers
             try
             {
                 _criteriaType = _drugAmendmentConnectionService.PopulateCriteriaType(ClientName);
+
             }
             catch (Exception)
             {
@@ -291,6 +297,7 @@ namespace DrugAmmendment.Controllers
         public JsonResult GetActiveDrugList(string ClientName, string CriteriaType)
         {
             List<ExportToExcel> _ddList = new List<ExportToExcel>();
+
             try
             {
                 _ddList = _drugAmendmentConnectionService.GetActiveDrugList(ClientName,CriteriaType);
@@ -305,6 +312,7 @@ namespace DrugAmmendment.Controllers
         public JsonResult GetDrugList(string ClientName, string CriteriaType)
         {
             List<DrugDetails> _ddList = new List<DrugDetails>();
+
             try
             {
                 _ddList = _drugAmendmentConnectionService.GetDrugList(ClientName,CriteriaType);
@@ -347,6 +355,7 @@ namespace DrugAmmendment.Controllers
             {
                 isAvailableNonActive = CheckIsAvailableNonActive(Delivery, CriteriaType, Criteria);
                 if (isAvailableNonActive)
+
                 {
                     Response.Write("<script>window.alert(\'Drug is Present but it is Non-Active\');window.location='DeleteDrugView';</script>");
                 }
@@ -364,6 +373,7 @@ namespace DrugAmmendment.Controllers
 
         private void DeleteDrugFromDB(string Delivery, string CriteriaType, string Criteria)
         {
+           
             try
             {
                 if (_drugAmendmentConnectionService.DeleteDrugFromDB(Delivery,CriteriaType,Criteria) > 0)
@@ -387,6 +397,7 @@ namespace DrugAmmendment.Controllers
         public JsonResult GetAutoCriteria(string criteria, string delivery, string criteriaType)
         {
             List<string> _criteriaList = new List<string>();
+
             try
             {
                 _criteriaList = _drugAmendmentConnectionService.GetAutoCriteria(criteria,delivery,criteriaType);
@@ -402,6 +413,7 @@ namespace DrugAmmendment.Controllers
         {
             criteria = criteria.TrimEnd();
             List<string> _leadTermList = new List<string>();
+
             try
             {
                 _leadTermList = _drugAmendmentConnectionService.GetAutoTHSTerm(criteria,delivery,criteriaType);
