@@ -1,4 +1,5 @@
 ﻿using DrugAmmendment.Models;
+using DrugAmmendment.Services;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -14,6 +15,12 @@ namespace DrugAmmendment.Controllers
 {
     public class HomeController : Controller
     {
+        private IDrugAmendmentConnectionService _drugAmendmentConnectionService = null;
+
+        public HomeController()
+        {
+            _drugAmendmentConnectionService = new DrugAmendmentConnectionService();
+        }
         public ActionResult Dashboard()
         {
             return View();
@@ -36,493 +43,277 @@ namespace DrugAmmendment.Controllers
             }
             return View();
         }
-
         [HttpPost]
         public void AddDrug(FormCollection form)
         {
-            string criteriaFromUser = form["criteria"];
-            string delivery = form["client"];
-            string criteriaType = form["criteriaType"];
-
-            if (criteriaType == "BrandName")
+                string criteriaFromUser = form["criteria"].Trim();
+                string delivery = form["client"];
+                string criteriaType = form["criteriaType"];
+            TempData["Client"] = delivery;
+            TempData["CriteriaType"] = criteriaType;
+            try
             {
-                bool isAvailableNonActive = CheckIsAvailableNonActive(delivery,criteriaType, criteriaFromUser);
-                if (isAvailableNonActive)
+                if (criteriaType == "BrandName")
                 {
-                    UpdateToActive(delivery, criteriaType, criteriaFromUser);
-                }
-                else
-                {
-                    CheckIsAvailableActive(delivery, criteriaType, criteriaFromUser, null);
-                }
+                    bool isAvailableNonActive = false;
+                    try
+                    {
+                        isAvailableNonActive = CheckIsAvailableNonActive(delivery, criteriaType, criteriaFromUser);
+                    }
+                    catch (Exception)
+                    {
+                        Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='AddDrugView'</script>");
+                    }
 
-            }
-            else
-            {
-                bool isValidLeadTerm = ValidateLeadTerm(criteriaFromUser);
-                if (isValidLeadTerm)
-                {
-                    ArrayList ThesData = GetDataFromThesTerm(criteriaFromUser);
-                    string criteria = ThesData[0].ToString();
-                    int? termID = Convert.ToInt32(ThesData[1]);
-
-                    bool isAvailableNonActive = CheckIsAvailableNonActive(delivery, criteriaType, criteria);
                     if (isAvailableNonActive)
                     {
-                        UpdateToActive(delivery, criteriaType, criteria);
+                        UpdateToActive(delivery, criteriaType, criteriaFromUser);
                     }
                     else
                     {
-                        CheckIsAvailableActive(delivery, criteriaType, criteria, termID);
+                        CheckIsAvailableActive(delivery, criteriaType, criteriaFromUser, null);
                     }
+
                 }
                 else
                 {
-                    TempData["Client"] = delivery;
-                    TempData["CriteriaType"] = criteriaType;
-                    Response.Write("<script>window.alert(\'This drug is not a valid drug...! Please insert a valid one...!\');window.location='AddDrugView'</script>");
+                    bool isValidLeadTerm = false;
+                    
+                    try
+                    {
+                        isValidLeadTerm = ValidateLeadTerm(criteriaFromUser);
+                    }
+                    catch (Exception)
+                    {
+                        Response.Write("<script>window.alert(\'"+UserFriendlyMessage.getMessage()+"\');window.location='AddDrugView'</script>");
+                    }
+                    
+                    if (isValidLeadTerm)
+                    {
+                        ArrayList ThesData = new ArrayList();
+                        try
+                        {
+                            ThesData = GetDataFromThesTerm(criteriaFromUser);
+                        }
+                        catch (Exception)
+                        {
+                            Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='AddDrugView'</script>");
+                        }
+                        
+                        string criteria = ThesData[0].ToString();
+                        int? termID = Convert.ToInt32(ThesData[1]);
+                        bool isAvailableNonActive = false;
+                        try
+                        {
+                            isAvailableNonActive = CheckIsAvailableNonActive(delivery, criteriaType, criteria);
+                        }
+                        catch (Exception)
+                        {
+                            Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='AddDrugView'</script>");
+                        }
+                        
+                        if (isAvailableNonActive)
+                        {
+                            UpdateToActive(delivery, criteriaType, criteria);
+                        }
+                        else
+                        {
+                            CheckIsAvailableActive(delivery, criteriaType, criteria, termID);
+                        }
+                    }
+                    else
+                    {
+                        TempData["Client"] = delivery;
+                        TempData["CriteriaType"] = criteriaType;
+                        Response.Write("<script>window.alert(\'This drug is not a valid drug...! Please insert a valid one...!\');window.location='AddDrugView'</script>");
+                    }
                 }
             }
+            catch (Exception)
+            {
+                Response.Write("<script>window.alert(\'"+ UserFriendlyMessage.getMessage() + "\');window.location='AddDrugView'</script>");
+            }
         }
-
         private void CheckIsAvailableActive(string delivery, string criteriaType, string criteria, int? termID)
         {
             TempData["Client"] = delivery;
             TempData["CriteriaType"] = criteriaType;
 
-            int rowsAffected = 0;
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select Criteria FROM [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}' and IsActive = 1 ", delivery, criteriaType, criteria), conn);
             try
             {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                if (_drugAmendmentConnectionService.CheckIsAvailableActive(delivery, criteriaType, criteria, termID) > 0)
                 {
-                    rowsAffected = 1;
+                    Response.Write("<script>window.alert(\'This drug is already Present & Active in the DB...!');window.location='AddDrugView'</script>");
+                }
+                else
+                {
+                    AddDrugToDB(delivery, criteriaType, criteria, termID);
                 }
             }
             catch (Exception)
             {
-                Response.Write("<script>window.alert(\'Something Went Wrong...! Please Try Later...! \');window.location='Dashboard'</script>");
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            if (rowsAffected > 0)
-            {
-                Response.Write("<script>window.alert(\'This drug is already Present & Active in the DB...!');window.location='AddDrugView'</script>");
-            }
-            else
-            {
-                AddDrugToDB(delivery, criteriaType, criteria, termID);
+                Response.Write("<script>window.alert(\'"+UserFriendlyMessage.getMessage()+"\');window.location='AddDrugView'</script>");
             }
             
+            
         }
-
         private void UpdateToActive(string delivery, string criteriaType, string criteria)
         {
             TempData["Client"] = delivery;
             TempData["CriteriaType"] = criteriaType;
-            int rowsAffected = 0;
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            
-            SqlCommand cmd = new SqlCommand(string.Format("update [dbo].[ADFeedSelectionCriteriaLookup] set IsActive = 1, ModificationDate = GETDATE() where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}'", delivery, criteriaType, criteria), conn);
+
             try
             {
-                conn.Open();
-                rowsAffected = cmd.ExecuteNonQuery();
+                if (_drugAmendmentConnectionService.UpdateToActive(delivery, criteriaType, criteria) > 0)
+                {
+                    AuditLogger(delivery, criteriaType, criteria, "Active");
+                    Response.Write("<script>window.alert(\'Drug Updated to Active Successfully\');window.location='AddDrugView';</script>");
+                }
+                else
+                {
+                    Response.Write("<script>window.alert(\'Drug Not Updated...! May be this drug is not present in DB...!\');window.location='AddDrugView';</script>");
+                }
             }
-            catch (Exception e)
+            catch(Exception)
             {
-                Response.Write("<script>window.alert(\'Exception Occurred.\');window.location='AddDrugView';</script>");
+                Response.Write("<script>window.alert(\'"+UserFriendlyMessage.getMessage()+"\');window.location='AddDrugView';</script>");
             }
-            finally
-            {
-                conn.Close();
-            }
-
-            if (rowsAffected > 0 )
-            {
-                AuditLogger(delivery, criteriaType, criteria, "Active");
-                Response.Write("<script>window.alert(\'Drug Updated to Active Successfully\');window.location='AddDrugView';</script>");
-            }
-            else
-            {
-                Response.Write("<script>window.alert(\'Drug Not Updated...! May be this drug is not present in DB...!\');window.location='AddDrugView';</script>");
-            }
-            
         }
-
         private bool CheckIsAvailableNonActive(string delivery, string criteriaType, string criteria)
         {
-            bool flag = false;
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            
-            SqlCommand cmd = new SqlCommand(string.Format("select Criteria FROM [dbo].[ADFeedSelectionCriteriaLookup] where Criteria  = '{0}' and CriteriaType = '{1}' and Delivery = '{2}' and IsActive = 0", criteria,criteriaType, delivery), conn);
+            bool _flag = false;
             try
             {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    if (reader[0].ToString().Equals(criteria, StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        flag = true;
-                    }
-                    else
-                    {
-                        flag = false;
-                    }
-                }
+                _flag = _drugAmendmentConnectionService.CheckIsAvailableNonActive(delivery,criteriaType,criteria);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Response.Write(e.Message);
+                throw;
             }
-            finally
-            {
-                conn.Close();
-            }
-            return flag;
+            return _flag;
         }
-
         private bool ValidateLeadTerm(string criteria)
         {
-            bool flag = false ;
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select LeadTerm FROM [dbo].[THSTerm] where LeadTerm  like '{0}'", criteria), conn);
+            bool _flag = false ;
             try
             {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    if (reader[0].ToString().Equals(criteria, StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        flag = true;
-                    }
-                    else
-                    {
-                        flag = false;
-                    }
-                }
+                _flag = _drugAmendmentConnectionService.ValidateLeadTerm(criteria);
 
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Response.Write(e.Message);
+                throw;
             }
-            finally
-            {
-                conn.Close();
-            }
-            return flag;
+            return _flag;
         }
-
         private ArrayList GetDataFromThesTerm(string criteria)
         {
             ArrayList data = new ArrayList();
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select LeadTerm, TermID from [dbo].[THSTerm] where LeadTerm = '{0}'", criteria), conn);
             try
             {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    data.Add(reader[0].ToString());
-                    data.Add(reader[1]);
-                }
+                data  = _drugAmendmentConnectionService.GetDataFromThesTerm(criteria);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Response.Write(e.Message);
-            }
-            finally
-            {
-                conn.Close();
+                throw;
             }
             return data;
         }
-
         private void AddDrugToDB(string delivery, string criteriaType, string criteria, int? termID)
         {
             TempData["Client"] = delivery;
             TempData["CriteriaType"] = criteriaType;
-            SqlCommand cmd = new SqlCommand();
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            if (termID == null)
-            {
-                cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}',null,{3},GETDATE(),GETDATE())", delivery, criteriaType, criteria, 1), conn);
-            }
-            else { 
-                cmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaLookup] values ('{0}','{1}','{2}',{3},{4},GETDATE(),GETDATE())", delivery, criteriaType, criteria, termID, 1), conn);
-            }
-            int rowsAffected = 0;
+
             try
             {
-                conn.Open();
-                rowsAffected = cmd.ExecuteNonQuery();
-            }
-            catch (SqlException e)
-            {
-                Response.Write("<script>window.alert(\'You are not allowed to do changes in Database.\');window.location='AddDrugView';</script>");
-            }
-            catch (Exception e)
-            {
-                Response.Write("<script>window.alert(\'Drug is not added. Something went wrong. Exception Occurred.\');window.location='Dashboard';</script>");
-            }
-            finally {
-                conn.Close();
-            }
-                         
-            if (rowsAffected > 0)
-            {
-                AuditLogger(delivery, criteriaType, criteria, "Add");
-                Response.Write("<script>window.alert(\'Drug Added Successfully\');window.location='AddDrugView';</script>");
-            }
-            else
-            {
-                Response.Write("<script>window.alert(\'Drug is not added.Something went wrong.\');window.location='AddDrugView';</script>");
-            }
-        }
-
-
-        private void AuditLogger(string Delivery, string CriteriaType, string Criteria, string ActionType)
-        {
-            int? TermID = 0;
-            TermID = GetTermID(Delivery,CriteriaType,Criteria);
-            int rowsAffected = 0;
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand logCmd = null;
-            if (TermID == 0)
-            {
-                 logCmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaHistory] values('{0}','{1}','{2}',null,'{3}',GETDATE(),'{4}')", Delivery, CriteriaType, Criteria, ActionType, Environment.UserName), conn);
-            }
-            else
-            {
-                logCmd = new SqlCommand(string.Format("insert into [dbo].[ADFeedSelectionCriteriaHistory] values('{0}','{1}','{2}',{3},'{4}',GETDATE(),'{5}')", Delivery, CriteriaType, Criteria, TermID, ActionType, Environment.UserName), conn);
-            }
-            
-            try
-            {
-                conn.Open();
-                rowsAffected = logCmd.ExecuteNonQuery();
-            }
-            catch (Exception e)
-            {
-                Response.Write(e.Message);
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
-        private int? GetTermID(string delivery, string criteriaType, string criteria)
-        {
-            int? TermID = 0;
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select TermID from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}'",delivery,criteriaType,criteria), conn);
-            try
-            {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                if (_drugAmendmentConnectionService.AddDrugToDB(delivery, criteriaType, criteria, termID) > 0)
                 {
-                    if (reader[0].Equals(System.DBNull.Value))
-                    {
-                        TermID = 0;
-                    }
-                    else
-                    {
-                        TermID = Convert.ToInt32(reader[0]);
-                    }
+                    AuditLogger(delivery, criteriaType, criteria, "Add");
+                    Response.Write("<script>window.alert(\'Drug Added Successfully\');window.location='AddDrugView';</script>");
+                }
+                else
+                {
+                    Response.Write("<script>window.alert(\'Drug is not added.Something went wrong.\');window.location='AddDrugView';</script>");
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Response.Write(e.Message);
-            }
-            finally
+                Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='AddDrugView';</script>");
+            }           
+            
+        }
+        private void AuditLogger(string Delivery, string CriteriaType, string Criteria, string ActionType)
+        {
+            TempData["Client"] = Delivery;
+            TempData["CriteriaType"] = CriteriaType;
+
+            try
             {
-                conn.Close();
+                _drugAmendmentConnectionService.AuditLogger(Delivery,CriteriaType,Criteria,ActionType);
+
             }
-            return TermID;
+            catch (Exception)
+            {
+                Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='AddDrugView';</script>");
+            }
         }
 
         [HttpGet]
         public JsonResult PopulateClients()
         {
-            List<SelectListItem> clients = new List<SelectListItem>();
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand("select Distinct Delivery from [dbo].[ADFeedSelectionCriteriaLookup]", conn);
+            List<SelectListItem> _clients = new List<SelectListItem>();
             try
             {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    clients.Add(new SelectListItem { Text = reader[0].ToString() });
-                }
+                _clients = _drugAmendmentConnectionService.PopulateClients();
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Response.Write(e.Message);
+                Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='Dashboard';</script>");
             }
-            finally
-            {
-                conn.Close();
-            }
-            return Json(clients, JsonRequestBehavior.AllowGet);
+            return Json(_clients, JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
         public JsonResult PopulateCriteriaType(string ClientName)
         {
-            List<SelectListItem> criteriaType = new List<SelectListItem>();
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select Distinct CriteriaType from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}'", ClientName),conn);
+            List<SelectListItem> _criteriaType = new List<SelectListItem>();
             try
             {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    criteriaType.Add(new SelectListItem { Text = reader[0].ToString() });
-                }
+                _criteriaType = _drugAmendmentConnectionService.PopulateCriteriaType(ClientName);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Response.Write(e.Message);
+                Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='Dashboard';</script>");
             }
-            finally
-            {
-                conn.Close();
-            }
-            return Json(criteriaType, JsonRequestBehavior.AllowGet);
+            return Json(_criteriaType, JsonRequestBehavior.AllowGet);
         }
 
         public JsonResult GetActiveDrugList(string ClientName, string CriteriaType)
         {
-            List<ExportToExcel> ddList = new List<ExportToExcel>();
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select * from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and IsActive = 1", ClientName, CriteriaType), conn);     //To have active list change IsActive = 1;
+            List<ExportToExcel> _ddList = new List<ExportToExcel>();
             try
             {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    ExportToExcel dd = new ExportToExcel();
-                    dd.Delivery = reader[0].ToString();
-                    dd.CriteriaType = reader[1].ToString();
-                    dd.Criteria = reader[2].ToString();
-                    if (reader[3].Equals(System.DBNull.Value))
-                    {
-                        dd.TermID = null;
-                    }
-                    else
-                    {
-                        dd.TermID = Convert.ToInt32(reader[3]);
-                    }
-                    if (reader[5].Equals(System.DBNull.Value))
-                    {
-                        dd.ModificationDate = "Null";
-                    }
-                    else
-                    {
-                        dd.ModificationDate = reader[5].ToString();
-                    }
-                    if (reader[6].Equals(System.DBNull.Value))
-                    {
-                        dd.CreationDate = "Null";
-                    }
-                    else
-                    {
-                        dd.CreationDate = reader[6].ToString();
-                    }
-                    ddList.Add(dd);
-                }
+                _ddList = _drugAmendmentConnectionService.GetActiveDrugList(ClientName,CriteriaType);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Response.Write(e.Message);
+                Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='Dashboard';</script>");
             }
-            finally
-            {
-                conn.Close();
-            }
-            return Json(ddList, JsonRequestBehavior.AllowGet);
+            return Json(_ddList, JsonRequestBehavior.AllowGet);
         }
 
         public JsonResult GetDrugList(string ClientName, string CriteriaType)
         {
-            List<DrugDetails> ddList = new List<DrugDetails>();
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select * from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}'", ClientName, CriteriaType), conn);     //To have active list change IsActive = 1;
+            List<DrugDetails> _ddList = new List<DrugDetails>();
             try
             {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    DrugDetails dd = new DrugDetails();
-                    dd.Delivery = reader[0].ToString();
-                    dd.CriteriaType = reader[1].ToString();
-                    dd.Criteria = reader[2].ToString();
-                    dd.IsActive = Convert.ToInt32(reader[4]);
-                    if (reader[3].Equals(System.DBNull.Value))
-                    {
-                        dd.TermID = null;
-                    }
-                    else
-                    {
-                        dd.TermID = Convert.ToInt32(reader[3]);
-                    }
-                    if (reader[5].Equals(System.DBNull.Value))
-                    {
-                        dd.ModificationDate = null;
-                    }
-                    else
-                    {
-                        dd.ModificationDate = Convert.ToDateTime(reader[5]);
-                    }
-                    if (reader[6].Equals(System.DBNull.Value))
-                    {
-                        dd.CreationDate = null;
-                    }
-                    else
-                    {
-                        dd.CreationDate = Convert.ToDateTime(reader[6]);
-                    }
-                    ddList.Add(dd);
-                }
+                _ddList = _drugAmendmentConnectionService.GetDrugList(ClientName,CriteriaType);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Response.Write(e.Message);
+                Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='Dashboard';</script>");
             }
-            finally
-            {
-                conn.Close();
-            }
-            return Json(ddList, JsonRequestBehavior.AllowGet);
+            return Json(_ddList, JsonRequestBehavior.AllowGet);
         }
 
 
@@ -544,43 +335,38 @@ namespace DrugAmmendment.Controllers
 
         public void DeleteDrug(FormCollection form)
         {
-            string Criteria = form["criteria"];
+            string Criteria = form["criteria"].Trim();
             string CriteriaType = form["criteriaType"];
             string Delivery = form["client"];
 
             TempData["Client"] = Delivery;
             TempData["CriteriaType"] = CriteriaType;
+            bool isAvailableNonActive = false;
 
-            bool isNonActiveToDelete = CheckIsAvailableAndDeleted(Delivery, Criteria, CriteriaType);
-            if (isNonActiveToDelete)
+            try
             {
-                Response.Write("<script>window.alert(\'Drug is Present but it is Non-Active\');window.location='DeleteDrugView';</script>");
+                isAvailableNonActive = CheckIsAvailableNonActive(Delivery, CriteriaType, Criteria);
+                if (isAvailableNonActive)
+                {
+                    Response.Write("<script>window.alert(\'Drug is Present but it is Non-Active\');window.location='DeleteDrugView';</script>");
+                }
+                else
+                {
+                    DeleteDrugFromDB(Delivery, CriteriaType, Criteria);
+                }
             }
-            else
+            catch (Exception)
             {
-                int rowsAffected = 0;
-                string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-                SqlConnection conn = new SqlConnection(connectionString);
-                SqlCommand cmd = new SqlCommand(string.Format("update [dbo].[ADFeedSelectionCriteriaLookup] set IsActive = 0 , ModificationDate = GETDATE() where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}'", Delivery, CriteriaType, Criteria), conn);
-                try
-                {
-                    conn.Open();
-                    rowsAffected = cmd.ExecuteNonQuery();
-                }
-                catch (SqlException e)
-                {
-                    Response.Write("<script>window.alert(\'You are not allowed to make changes in database.\');window.location='DeleteDrugView';</script>");
-                }
-                catch (Exception e)
-                {
-                    Response.Write(e.Message);
-                }
-                finally
-                {
-                    conn.Close();
-                }
+                Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='DeleteDrugView'</script>");
+            }
+            
+        }
 
-                if (rowsAffected > 0)
+        private void DeleteDrugFromDB(string Delivery, string CriteriaType, string Criteria)
+        {
+            try
+            {
+                if (_drugAmendmentConnectionService.DeleteDrugFromDB(Delivery,CriteriaType,Criteria) > 0)
                 {
                     AuditLogger(Delivery, CriteriaType, Criteria, "NonActive");
                     Response.Write("<script>window.alert(\'Drug Deleted Successfully...! Set IsActive to Zero\');window.location='DeleteDrugView';</script>");
@@ -590,93 +376,41 @@ namespace DrugAmmendment.Controllers
                     Response.Write("<script>window.alert(\'Drug is Not Available in Database to Delete...!\');window.location='DeleteDrugView';</script>");
                 }
             }
+            catch (Exception)
+            {
+                Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='DeleteDrugView'</script>");
+            }
+            
         }
 
-        private bool CheckIsAvailableAndDeleted(string delivery, string criteria, string criteriaType)
-        {
-            int rowsAffected = 0;
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select Criteria from [dbo].[ADFeedSelectionCriteriaLookup] where Delivery = '{0}' and CriteriaType = '{1}' and Criteria = '{2}' and IsActive = 0", delivery, criteriaType, criteria), conn);
-            try
-            {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    rowsAffected = 1;
-                }
-
-            }
-            catch (Exception e)
-            {
-                Response.Write(e.Message);
-            }
-            finally
-            {
-                conn.Close();
-            }
-            if (rowsAffected > 0)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-
-        }
 
         public JsonResult GetAutoCriteria(string criteria, string delivery, string criteriaType)
         {
-            List<string> CriteriaList = new List<string>();
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("SELECT distinct Criteria FROM [dbo].[ADFeedSelectionCriteriaLookup] WHERE Delivery = '{0}' and  CriteriaType = '{1}' and Criteria LIKE '%{2}%' and IsActive = 1", delivery, criteriaType, criteria), conn);
+            List<string> _criteriaList = new List<string>();
             try
             {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    CriteriaList.Add(reader[0].ToString());
-                }
+                _criteriaList = _drugAmendmentConnectionService.GetAutoCriteria(criteria,delivery,criteriaType);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Response.Write(e.Message);
+                Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='DeleteDrugView'</script>");
             }
-            finally
-            {
-                conn.Close();
-            }
-            return Json(CriteriaList, JsonRequestBehavior.AllowGet);
+            return Json(_criteriaList, JsonRequestBehavior.AllowGet);
         }
 
         public JsonResult GetAutoTHSTerm(string criteria, string delivery, string criteriaType)
         {
-            List<string> LeadTermList = new List<string>();
-            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
-            SqlConnection conn = new SqlConnection(connectionString);
-            SqlCommand cmd = new SqlCommand(string.Format("select leadterm from [dbo].[THSTerm] where LeadTerm like '%{0}%' and IsApproved = 'Y'", criteria), conn);
+            criteria = criteria.TrimEnd();
+            List<string> _leadTermList = new List<string>();
             try
             {
-                conn.Open();
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    LeadTermList.Add(reader[0].ToString());
-                }
+                _leadTermList = _drugAmendmentConnectionService.GetAutoTHSTerm(criteria,delivery,criteriaType);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Response.Write(e.Message);
+                Response.Write("<script>window.alert(\'" + UserFriendlyMessage.getMessage() + "\');window.location='DeleteDrugView'</script>");
             }
-            finally
-            {
-                conn.Close();
-            }
-            return Json(LeadTermList, JsonRequestBehavior.AllowGet);
+            return Json(_leadTermList, JsonRequestBehavior.AllowGet);
         }
     }
 }

@@ -78,7 +78,7 @@
                 $('#client').html(clientOptions);
             },
             error: function (err) {
-                alert('Something went wrong...!');
+                alert('Something went wrong while fetching the clients list...!');
             }
         });
     }

@@ -217,7 +217,10 @@
     <Compile Include="Models\DetailedDrugs.cs" />
     <Compile Include="Models\DropDownClass.cs" />
     <Compile Include="Models\ExportToExcel.cs" />
+    <Compile Include="Models\UserFriendlyMessage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\DrugAmendmentConnectionService.cs" />
+    <Compile Include="Services\IDrugAmendmentConnectionService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\web.config" />
